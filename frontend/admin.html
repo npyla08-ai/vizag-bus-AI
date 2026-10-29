@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>VizagBus AI — APSRTC Management & Conductor Portal</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col">
+
+  <!-- Fullscreen Media Lightbox Modal -->
+  <div id="mediaModal" class="hidden fixed inset-0 z-50 bg-black/85 backdrop-blur-sm flex items-center justify-center p-6">
+    <div class="bg-slate-900 border border-slate-700 rounded-2xl max-w-3xl w-full p-4 space-y-3 shadow-2xl">
+      <div class="flex justify-between items-center border-b border-slate-800 pb-2">
+        <h3 class="text-sm font-bold text-white" id="mediaModalTitle">Uploaded Evidence Viewer</h3>
+        <button onclick="closeMediaModal()" class="px-3 py-1 rounded-lg bg-slate-800 hover:bg-rose-600 text-xs font-bold text-white transition">✕ Close</button>
+      </div>
+      <div id="mediaModalBody" class="flex justify-center items-center bg-black rounded-xl overflow-hidden max-h-[75vh]"></div>
+    </div>
+  </div>
+
+  <!-- Header -->
+  <header class="bg-slate-900 border-b border-slate-800 px-6 py-4 flex justify-between items-center shadow-lg">
+    <div class="flex items-center gap-3">
+      <div class="w-10 h-10 bg-amber-500 rounded-xl flex items-center justify-center font-black text-xl text-slate-950">M</div>
+      <div>
+        <h1 class="font-bold text-xl tracking-tight text-white">APSRTC Depot Management & Conductor Portal</h1>
+        <p class="text-xs text-slate-400">Live Ticketing Headcount, Fleet/Route Configuration & Gemma 4 Grievance Ledger</p>
+      </div>
+    </div>
+    <div>
+      <a href="index.html" class="px-3.5 py-1.5 rounded-lg text-xs font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 hover:bg-emerald-500/20 transition">
+        ← Back to Commuter User Page
+      </a>
+    </div>
+  </header>
+
+  <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 p-6 flex-1">
+
+    <!-- Left 5 Cols: Conductor Ticketing + Manual Fleet & Stop Management -->
+    <div class="lg:col-span-5 space-y-6">
+
+      <!-- 1. Conductor Live Ticketing Console -->
+      <div class="bg-slate-900 border border-amber-500/30 rounded-2xl p-5 shadow-md">
+        <div class="flex justify-between items-center mb-3">
+          <h2 class="text-sm font-bold uppercase tracking-wider text-amber-400">🎫 Conductor Ticketing & Headcount</h2>
+          <span class="text-[10px] bg-amber-500/20 text-amber-300 px-2 py-0.5 rounded">Real-Time Sync</span>
+        </div>
+        <p class="text-xs text-slate-400 mb-3">Select your bus and update passenger headcount as tickets are issued or passengers alight.</p>
+
+        <div class="space-y-3">
+          <div>
+            <label class="text-xs text-slate-400">Select Active Bus</label>
+            <select id="conductorBusSelect" onchange="renderSelectedConductorBus()" class="w-full bg-slate-950 border border-slate-700 rounded-lg p-2.5 text-sm mt-1 outline-none"></select>
+          </div>
+
+          <div id="conductorBusStatus" class="p-3.5 bg-slate-950 rounded-xl border border-slate-800 space-y-2 text-xs"></div>
+
+          <div class="grid grid-cols-4 gap-2 pt-1">
+            <button onclick="changeCount(1)" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-2 rounded-lg text-xs">+1 Ticket</button>
+            <button onclick="changeCount(5)" class="bg-emerald-700 hover:bg-emerald-600 text-white font-bold py-2 rounded-lg text-xs">+5 Group</button>
+            <button onclick="changeCount(-1)" class="bg-slate-700 hover:bg-slate-600 text-white font-bold py-2 rounded-lg text-xs">-1 Drop</button>
+            <button onclick="changeCount(-5)" class="bg-slate-800 hover:bg-slate-700 text-white font-bold py-2 rounded-lg text-xs">-5 Drop</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- 2. Manually Add Bus / Route Number -->
+      <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-md">
+        <h2 class="text-sm font-bold uppercase tracking-wider text-emerald-400 mb-3">🚌 Add New Bus & Route</h2>
+        <div class="space-y-3 text-xs">
+          <div class="grid grid-cols-2 gap-2">
+            <div>
+              <label class="text-slate-400">Bus ID</label>
+              <input id="newBusId" type="text" placeholder="e.g. AP31Z-5501" class="w-full bg-slate-950 border border-slate-700 rounded-lg p-2 mt-1 outline-none" />
+            </div>
+            <div>
+              <label class="text-slate-400">Route Number</label>
+              <input id="newRouteNo" type="text" placeholder="e.g. 55K or 28" class="w-full bg-slate-950 border border-slate-700 rounded-lg p-2 mt-1 outline-none" />
+            </div>
+          </div>
+
+          <div>
+            <label class="text-slate-400">Route Corridor Name</label>
+            <input id="newRouteName" type="text" placeholder="e.g. Scindia ⇄ Simhachalam" class="w-full bg-slate-950 border border-slate-700 rounded-lg p-2 mt-1 outline-none" />
+          </div>
+
+          <div class="grid grid-cols-3 gap-2">
+            <div>
+              <label class="text-slate-400">Current Stop</label>
+              <select id="newBusNextStop" class="w-full bg-slate-950 border border-slate-700 rounded-lg p-2 mt-1 outline-none"></select>
+            </div>
+            <div>
+              <label class="text-slate-400">Initial Headcount</label>
+              <input id="newBusPassengers" type="number" value="15" class="w-full bg-slate-950 border border-slate-700 rounded-lg p-2 mt-1 outline-none" />
+            </div>
+            <div>
+              <label class="text-slate-400">ETA (Mins)</label>
+              <input id="newBusEta" type="number" value="4" class="w-full bg-slate-950 border border-slate-700 rounded-lg p-2 mt-1 outline-none" />
+            </div>
+          </div>
+
+          <div>
+            <label class="text-slate-400 block mb-1">Assign Stops Served by This Route (Hold Cmd/Ctrl to select multiple)</label>
+            <select id="newBusServedStops" multiple class="w-full h-24 bg-slate-950 border border-slate-700 rounded-lg p-2 outline-none"></select>
+          </div>
+
+          <button onclick="addNewBus()" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-semibold py-2 rounded-lg transition">
+            + Add Bus & Propagate to User Page
+          </button>
+          <div id="busAddedMsg" class="hidden text-emerald-400 text-[11px] font-medium"></div>
+        </div>
+      </div>
+
+      <!-- 3. Manually Add New Bus Stop -->
+      <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-md">
+        <h2 class="text-sm font-bold uppercase tracking-wider text-cyan-400 mb-3">🚏 Add New Bus Stop</h2>
+        <div class="space-y-2.5 text-xs">
+          <div class="grid grid-cols-2 gap-2">
+            <div>
+              <label class="text-slate-400">Stop ID Code</label>
+              <input id="newStopId" type="text" placeholder="e.g. MVP_COLONY" class="w-full bg-slate-950 border border-slate-700 rounded-lg p-2 mt-1 outline-none" />
+            </div>
+            <div>
+              <label class="text-slate-400">Stop Display Name</label>
+              <input id="newStopName" type="text" placeholder="e.g. MVP Colony Double Road" class="w-full bg-slate-950 border border-slate-700 rounded-lg p-2 mt-1 outline-none" />
+            </div>
+          </div>
+          <div class="grid grid-cols-2 gap-2">
+            <div>
+              <label class="text-slate-400">Latitude</label>
+              <input id="newStopLat" type="number" step="0.0001" value="17.7440" class="w-full bg-slate-950 border border-slate-700 rounded-lg p-2 mt-1 outline-none" />
+            </div>
+            <div>
+              <label class="text-slate-400">Longitude</label>
+              <input id="newStopLng" type="number" step="0.0001" value="83.3340" class="w-full bg-slate-950 border border-slate-700 rounded-lg p-2 mt-1 outline-none" />
+            </div>
+          </div>
+          <button onclick="addNewStop()" class="w-full bg-cyan-600 hover:bg-cyan-500 text-white font-semibold py-2 rounded-lg transition">
+            + Add Bus Stop to Database
+          </button>
+          <div id="stopAddedMsg" class="hidden text-cyan-400 text-[11px] font-medium"></div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Right 7 Cols: Live Passenger Complaints & Gemma 4 Vigilance Audit Feed -->
+    <div class="lg:col-span-7 space-y-6">
+      <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-md">
+        <div class="flex justify-between items-center border-b border-slate-800 pb-3 mb-4">
+          <div>
+            <h2 class="text-base font-bold text-white flex items-center gap-2">
+              <span class="w-2.5 h-2.5 rounded-full bg-rose-500 animate-ping"></span>
+              Submitted Passenger Complaints & Gemma 4 Triage Feed
+            </h2>
+            <p class="text-xs text-slate-400">View uploaded photo/video evidence and click "Mark as Finished" once action is taken.</p>
+          </div>
+          <span id="complaintTotalBadge" class="px-3 py-1 rounded-full text-xs font-bold bg-rose-500/10 text-rose-400 border border-rose-500/20">0 Complaints</span>
+        </div>
+
+        <div id="complaintsFeed" class="space-y-4 max-h-[800px] overflow-y-auto pr-1"></div>
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    const API_BASE = "http://127.0.0.1:8000";
+    let fleetBuses = [];
+    let stopsList = [];
+    let cachedComplaints = [];
+
+    async function loadAdminData() {
+      const [busesRes, stopsRes, compRes] = await Promise.all([
+        fetch(`${API_BASE}/api/buses`),
+        fetch(`${API_BASE}/api/stops`),
+        fetch(`${API_BASE}/api/complaints`)
+      ]);
+      fleetBuses = await busesRes.json();
+      stopsList = await stopsRes.json();
+      cachedComplaints = await compRes.json();
+
+      populateConductorDropdown();
+      populateStopSelects();
+      renderComplaintsFeed(cachedComplaints);
+    }
+
+    function populateConductorDropdown() {
+      const sel = document.getElementById('conductorBusSelect');
+      const current = sel.value;
+      sel.innerHTML = "";
+      fleetBuses.forEach(b => {
+        const opt = document.createElement('option');
+        opt.value = b.id;
+        opt.innerText = `Route ${b.route_no} — ${b.id} (${b.route_name})`;
+        sel.appendChild(opt);
+      });
+      if (current && fleetBuses.some(b => b.id === current)) {
+        sel.value = current;
+      }
+      renderSelectedConductorBus();
+    }
+
+    function renderSelectedConductorBus() {
+      const busId = document.getElementById('conductorBusSelect').value;
+      const bus = fleetBuses.find(b => b.id === busId);
+      const box = document.getElementById('conductorBusStatus');
+      if (!bus) return;
+
+      const barColor = bus.occupancy_pct > 85 ? 'bg-rose-500' : (bus.occupancy_pct > 50 ? 'bg-amber-500' : 'bg-emerald-500');
+      box.innerHTML = `
+        <div class="flex justify-between items-center">
+          <span class="font-bold text-white text-sm">Route ${bus.route_no} (${bus.id})</span>
+          <span class="text-xs text-emerald-400 font-semibold">Next Stop: ${bus.next_stop}</span>
+        </div>
+        <div class="flex justify-between text-xs text-slate-300">
+          <span>Current Headcount: <b>${bus.current_passengers} / ${bus.total_seats} seats</b></span>
+          <span class="font-bold">${bus.occupancy_pct}% Occupancy</span>
+        </div>
+        <div class="w-full bg-slate-800 h-2.5 rounded-full overflow-hidden">
+          <div class="${barColor} h-2.5 transition-all duration-300" style="width: ${Math.min(100, bus.occupancy_pct)}%"></div>
+        </div>
+      `;
+    }
+
+    async function changeCount(delta) {
+      const busId = document.getElementById('conductorBusSelect').value;
+      if (!busId) return;
+      await fetch(`${API_BASE}/api/conductor/update`, {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({ bus_id: busId, delta_passengers: delta })
+      });
+      loadAdminData();
+    }
+
+    function populateStopSelects() {
+      const s1 = document.getElementById('newBusNextStop');
+      const s2 = document.getElementById('newBusServedStops');
+      if (s1.options.length === stopsList.length) return;
+
+      s1.innerHTML = "";
+      s2.innerHTML = "";
+      stopsList.forEach(s => {
+        const o1 = document.createElement('option');
+        o1.value = s.stop_id;
+        o1.innerText = `${s.name} (${s.stop_id})`;
+        s1.appendChild(o1);
+
+        const o2 = document.createElement('option');
+        o2.value = s.stop_id;
+        o2.innerText = `${s.name} [Routes: ${s.routes.join(', ') || 'None'}]`;
+        s2.appendChild(o2);
+      });
+    }
+
+    async function addNewStop() {
+      const stop_id = document.getElementById('newStopId').value.trim();
+      const name = document.getElementById('newStopName').value.trim();
+      const latitude = parseFloat(document.getElementById('newStopLat').value);
+      const longitude = parseFloat(document.getElementById('newStopLng').value);
+      if (!stop_id || !name) return alert("Enter Stop ID and Name");
+
+      await fetch(`${API_BASE}/api/admin/stops`, {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({ stop_id, name, latitude, longitude })
+      });
+
+      const msg = document.getElementById('stopAddedMsg');
+      msg.classList.remove('hidden');
+      msg.innerText = `✓ Stop '${name}' added! Available on User Page.`;
+      document.getElementById('newBusNextStop').innerHTML = "";
+      loadAdminData();
+    }
+
+    async function addNewBus() {
+      const bus_id = document.getElementById('newBusId').value.trim();
+      const route_no = document.getElementById('newRouteNo').value.trim();
+      const route_name = document.getElementById('newRouteName').value.trim();
+      const next_stop_id = document.getElementById('newBusNextStop').value;
+      const current_passengers = parseInt(document.getElementById('newBusPassengers').value) || 10;
+      const eta_minutes = parseInt(document.getElementById('newBusEta').value) || 5;
+
+      const multiSelect = document.getElementById('newBusServedStops');
+      const served_stop_ids = Array.from(multiSelect.selectedOptions).map(o => o.value);
+
+      if (!bus_id || !route_no || !route_name) {
+        return alert("Please fill in Bus ID, Route Number, and Route Name.");
+      }
+
+      await fetch(`${API_BASE}/api/admin/buses`, {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({
+          bus_id,
+          route_no,
+          route_name,
+          total_seats: 50,
+          current_passengers,
+          next_stop_id,
+          eta_minutes,
+          served_stop_ids
+        })
+      });
+
+      const msg = document.getElementById('busAddedMsg');
+      msg.classList.remove('hidden');
+      msg.innerText = `✓ Bus ${bus_id} (Route ${route_no}) added and linked to stops!`;
+      document.getElementById('newBusNextStop').innerHTML = "";
+      loadAdminData();
+    }
+
+    async function markComplaintFinished(complaintId) {
+      await fetch(`${API_BASE}/api/complaints/${complaintId}/resolve`, {
+        method: 'POST'
+      });
+      loadAdminData();
+    }
+
+    function openMediaModal(complaintId) {
+      const comp = cachedComplaints.find(c => c.id === complaintId);
+      if (!comp || !comp.media_data) return;
+
+      const modal = document.getElementById('mediaModal');
+      const body = document.getElementById('mediaModalBody');
+      document.getElementById('mediaModalTitle').innerText = `Complaint #${comp.id} — Bus ${comp.bus_id} (${comp.issue_type})`;
+
+      if (comp.media_type && comp.media_type.startsWith('video/')) {
+        body.innerHTML = `<video src="${comp.media_data}" controls autoplay class="max-h-[70vh] w-auto rounded"></video>`;
+      } else {
+        body.innerHTML = `<img src="${comp.media_data}" class="max-h-[70vh] w-auto object-contain rounded" />`;
+      }
+      modal.classList.remove('hidden');
+    }
+
+    function closeMediaModal() {
+      const modal = document.getElementById('mediaModal');
+      document.getElementById('mediaModalBody').innerHTML = "";
+      modal.classList.add('hidden');
+    }
+
+    function renderComplaintsFeed(complaints) {
+      const pendingCount = complaints.filter(c => c.status !== 'Resolved').length;
+      document.getElementById('complaintTotalBadge').innerText = `${pendingCount} Pending / ${complaints.length} Total`;
+      const feed = document.getElementById('complaintsFeed');
+
+      if (complaints.length === 0) {
+        feed.innerHTML = `<div class="p-8 text-center text-xs text-slate-500 border border-slate-800 rounded-xl">No passenger complaints submitted yet. Submit one from the User Page to test live sync.</div>`;
+        return;
+      }
+
+      feed.innerHTML = "";
+      complaints.forEach(c => {
+        const isResolved = (c.status === 'Resolved');
+        const badgeColor = isResolved 
+          ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' 
+          : (c.ai_severity === 'Critical' ? 'bg-rose-500 text-white' : 'bg-amber-500 text-slate-950');
+
+        let mediaHtml = "";
+        if (c.media_data) {
+          if (c.media_type && c.media_type.startsWith('video/')) {
+            mediaHtml = `
+              <div class="mt-2 p-2.5 bg-slate-900 rounded-xl border border-slate-800 space-y-2">
+                <div class="flex justify-between items-center">
+                  <span class="text-[11px] font-semibold text-cyan-400">📹 Attached Video Evidence</span>
+                  <button onclick="openMediaModal(${c.id})" class="px-2.5 py-1 rounded bg-cyan-500/10 hover:bg-cyan-500/20 text-cyan-300 border border-cyan-500/30 text-[11px] font-semibold">
+                    🔍 Open Fullscreen Video
+                  </button>
+                </div>
+                <video src="${c.media_data}" controls class="w-full max-h-52 rounded-lg bg-black"></video>
+              </div>
+            `;
+          } else {
+            mediaHtml = `
+              <div class="mt-2 p-2.5 bg-slate-900 rounded-xl border border-slate-800 space-y-2">
+                <div class="flex justify-between items-center">
+                  <span class="text-[11px] font-semibold text-cyan-400">🖼️ Attached Photo Evidence</span>
+                  <button onclick="openMediaModal(${c.id})" class="px-2.5 py-1 rounded bg-cyan-500/10 hover:bg-cyan-500/20 text-cyan-300 border border-cyan-500/30 text-[11px] font-semibold">
+                    🔍 View Full Size Photo
+                  </button>
+                </div>
+                <img src="${c.media_data}" onclick="openMediaModal(${c.id})" class="w-full max-h-52 object-cover rounded-lg cursor-pointer hover:opacity-90 transition" />
+              </div>
+            `;
+          }
+        }
+
+        const card = document.createElement('div');
+        card.className = `p-4 rounded-xl border space-y-2.5 text-xs transition ${
+          isResolved ? 'bg-slate-950/50 border-slate-800/80 opacity-70' : 'bg-slate-950 border-slate-800'
+        }`;
+
+        card.innerHTML = `
+          <div class="flex justify-between items-center border-b border-slate-800 pb-2.5">
+            <div class="flex items-center gap-2">
+              <span class="px-2 py-0.5 rounded text-[10px] font-bold uppercase ${badgeColor}">
+                ${isResolved ? '✓ FINISHED / RESOLVED' : (c.ai_severity || 'HIGH')}
+              </span>
+              <span class="font-bold text-white text-sm">Complaint #${c.id} • Bus ${c.bus_id}</span>
+              <span class="text-slate-400">• ${c.issue_type}</span>
+            </div>
+            <div class="flex items-center gap-3">
+              <span class="text-rose-400 font-bold">Fine: ₹${c.ai_fine_inr || 500}</span>
+              ${!isResolved ? `
+                <button onclick="markComplaintFinished(${c.id})" class="px-3 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-[11px] shadow transition">
+                  ✓ Mark as Finished
+                </button>
+              ` : `
+                <span class="text-[11px] text-emerald-400 font-semibold">Action Completed</span>
+              `}
+            </div>
+          </div>
+
+          <p class="text-slate-300"><b>Passenger Report (${c.stop_name}):</b> "${c.description}"</p>
+          <p class="text-slate-400 text-[11px]"><b>Logged Conductor Occupancy at Incident:</b> ${c.logged_occupancy_pct}% full</p>
+
+          ${mediaHtml}
+
+          <div class="p-2.5 bg-slate-900 rounded-lg border border-slate-800 text-[11px] text-emerald-400 font-mono">
+            ${c.ai_action_summary || ''}<br/>
+            <b>Order:</b> ${c.ai_depot_order || ''}
+          </div>
+        `;
+        feed.appendChild(card);
+      });
+    }
+
+    window.onload = () => {
+      loadAdminData();
+      setInterval(loadAdminData, 5000);
+    };
+  </script>
+</body>
+</html>

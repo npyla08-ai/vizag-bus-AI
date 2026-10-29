@@ -1,0 +1,646 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>VizagBus AI — Commuter Live Tracker</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <style>
+    .bus-card-selected {
+      border-color: #10b981 !important;
+      background-color: rgba(16, 185, 129, 0.12) !important;
+      box-shadow: 0 0 15px rgba(16, 185, 129, 0.25);
+    }
+  </style>
+</head>
+<body class="bg-slate-900 text-slate-100 min-h-screen flex flex-col">
+
+  <!-- Header -->
+  <header class="bg-slate-800 border-b border-slate-700 px-6 py-4 flex justify-between items-center shadow-lg">
+    <div class="flex items-center gap-3">
+      <div class="w-10 h-10 bg-emerald-500 rounded-xl flex items-center justify-center font-black text-xl text-slate-950">V</div>
+      <div>
+        <h1 class="font-bold text-xl tracking-tight text-white">VizagBus <span class="text-emerald-400">AI</span> — Commuter Portal</h1>
+        <p class="text-xs text-slate-400">Live Bus Stop Finder, Route Occupancy & Grievance Reporting</p>
+      </div>
+    </div>
+    <div class="flex items-center gap-4">
+      <a href="admin.html" class="px-3.5 py-1.5 rounded-lg text-xs font-semibold bg-amber-500/10 text-amber-400 border border-amber-500/30 hover:bg-amber-500/20 transition">
+        ⚙️ Open Management & Conductor Page →
+      </a>
+    </div>
+  </header>
+
+  <!-- Main Grid -->
+  <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 p-6 flex-1">
+    
+    <!-- Left Column: Location Search & Matched Route Buses (4 Cols) -->
+    <div class="lg:col-span-4 space-y-6">
+      
+      <!-- Step 1: Enter Location -->
+      <div class="bg-slate-800 border border-slate-700 rounded-2xl p-5 shadow-sm">
+        <div class="flex justify-between items-center mb-3">
+          <h2 class="text-sm font-semibold uppercase tracking-wider text-emerald-400">1. Enter Your Location</h2>
+          <button onclick="useBrowserGPS()" class="text-[11px] bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 border border-blue-500/30 px-2.5 py-1 rounded-lg font-medium transition">
+            📍 Use Live GPS
+          </button>
+        </div>
+
+        <div class="space-y-3">
+          <div>
+            <label class="text-xs text-slate-400">Current Standing Location (Type freely)</label>
+            <input id="userLocationInput" type="text" list="vizagLocations" placeholder="e.g. Maddilapalem, Gajuwaka, Siripuram, NAD..." 
+                   class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-sm text-white placeholder-slate-500 mt-1 focus:ring-2 focus:ring-emerald-500 outline-none" />
+          </div>
+          <div>
+            <label class="text-xs text-slate-400">Destination Location (Optional)</label>
+            <input id="userDestinationInput" type="text" list="vizagLocations" placeholder="e.g. Simhachalam, Bheemili, RTC Complex..." 
+                   class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-sm text-white placeholder-slate-500 mt-1 focus:ring-2 focus:ring-emerald-500 outline-none" />
+          </div>
+
+          <datalist id="vizagLocations"></datalist>
+
+          <button onclick="findNearestStopAndRoutes()" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-semibold py-2.5 rounded-lg text-sm transition shadow">
+            Find Nearest Bus Stop & Available Routes
+          </button>
+        </div>
+        
+        <div id="routeInfoBox" class="mt-4 p-3.5 bg-slate-900/95 rounded-xl border border-emerald-500/30 text-xs hidden space-y-2"></div>
+      </div>
+
+      <!-- Step 2: Strictly Filtered Routes for Entered Location -->
+      <div class="bg-slate-800 border border-slate-700 rounded-2xl p-5 shadow-sm">
+        <div class="flex justify-between items-center mb-2">
+          <h2 class="text-sm font-semibold uppercase tracking-wider text-slate-300">2. Routes at Your Nearest Stop</h2>
+          <span class="text-xs text-emerald-400 font-semibold" id="busCount">Enter location above</span>
+        </div>
+
+        <div id="routeFilterBar" class="flex flex-wrap gap-1.5 mb-3"></div>
+
+        <div id="busesContainer" class="space-y-3 max-h-[420px] overflow-y-auto pr-1">
+          <div class="p-6 text-center text-xs text-slate-400 bg-slate-900/50 rounded-xl border border-slate-700/60">
+            Enter your current location above and click <b>"Find Nearest Bus Stop & Available Routes"</b> to view only the buses serving your nearest stop.
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Right Column: Live Map, Same-Route Comparison & Commuter Tools (8 Cols) -->
+    <div class="lg:col-span-8 space-y-6">
+      
+      <!-- Map Container -->
+      <div class="bg-slate-800 border border-slate-700 rounded-2xl overflow-hidden shadow-sm relative">
+        <div id="map" class="w-full h-[430px] z-10"></div>
+        
+        <!-- Map Legend -->
+        <div class="absolute bottom-3 left-3 z-20 bg-slate-900/90 backdrop-blur-md border border-slate-700 px-3 py-2 rounded-xl text-[11px] flex items-center gap-4 shadow">
+          <span class="flex items-center gap-1.5"><span class="w-3 h-3 rounded-full bg-blue-500 inline-block border border-white"></span> You Are Here</span>
+          <span class="flex items-center gap-1.5"><span class="w-3 h-3 rounded-full bg-emerald-400 inline-block border border-white"></span> Nearest Bus Stop</span>
+          <span class="flex items-center gap-1.5"><span>🚌</span> Matched Route Bus</span>
+        </div>
+      </div>
+
+      <!-- Same-Route Bus Arrival Comparison Drawer -->
+      <div id="comparisonDrawer" class="hidden bg-slate-800 border border-emerald-500/40 rounded-2xl p-5 shadow-lg space-y-3">
+        <div class="flex justify-between items-center border-b border-slate-700 pb-3">
+          <div>
+            <span class="text-[10px] uppercase font-bold tracking-wider text-emerald-400">SAME-ROUTE ARRIVAL COMPARISON</span>
+            <h3 class="font-bold text-white text-base" id="comparisonTitle">Route Comparison</h3>
+          </div>
+          <span class="text-xs text-slate-400" id="comparisonStopTag"></span>
+        </div>
+        <div id="comparisonList" class="grid grid-cols-1 md:grid-cols-3 gap-3 pt-1"></div>
+      </div>
+
+      <!-- Bottom Split: Gemma 4 Commuter Agent + Complaint Drop Box -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        
+        <!-- Gemma 4 Commuter Chat -->
+        <div class="bg-slate-800 border border-slate-700 rounded-2xl p-5 flex flex-col justify-between shadow-sm">
+          <div>
+            <div class="flex items-center justify-between mb-3">
+              <h3 class="font-semibold text-white flex items-center gap-2 text-sm">
+                <span class="w-2.5 h-2.5 rounded-full bg-cyan-400"></span> Gemma 4 Commuter Assistant
+              </h3>
+              <span class="text-[10px] bg-cyan-500/10 text-cyan-400 px-2 py-0.5 rounded border border-cyan-500/20">Open-Weights</span>
+            </div>
+            <div id="agentChatWindow" class="h-44 overflow-y-auto space-y-2 bg-slate-900/60 p-3 rounded-xl border border-slate-700 text-xs text-slate-300">
+              <p class="text-slate-400 italic">Ask me which bus to catch based on your location and current occupancy...</p>
+            </div>
+          </div>
+          <div class="mt-3 flex gap-2">
+            <input id="agentInput" type="text" placeholder="e.g. Should I take this bus or wait for the next?" class="flex-1 bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs focus:ring-2 focus:ring-cyan-500 outline-none" />
+            <button onclick="askGemmaAgent()" class="bg-cyan-600 hover:bg-cyan-500 text-white px-4 py-2 rounded-lg text-xs font-semibold">Ask</button>
+          </div>
+        </div>
+
+        <!-- Passenger Complaint Drop Box -->
+        <div class="bg-slate-800 border border-slate-700 rounded-2xl p-5 shadow-sm">
+          <div class="flex items-center justify-between mb-3">
+            <h3 class="font-semibold text-white flex items-center gap-2 text-sm">
+              <span class="w-2.5 h-2.5 rounded-full bg-rose-500"></span> Report Bus Issue / Drop Box
+            </h3>
+            <span class="text-[10px] bg-rose-500/10 text-rose-400 px-2 py-0.5 rounded border border-rose-500/20">Sent to Depot Admin</span>
+          </div>
+
+          <div class="space-y-2.5 text-xs">
+            <div class="grid grid-cols-2 gap-2">
+              <div>
+                <label class="text-slate-400">Select Bus</label>
+                <select id="complaintBusId" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2 mt-1 outline-none"></select>
+              </div>
+              <div>
+                <label class="text-slate-400">Issue Type</label>
+                <select id="complaintIssueType" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2 mt-1 outline-none">
+                  <option value="Driver Didn't Stop When Empty">Bus Empty, Driver Didn't Stop</option>
+                  <option value="Rash & Dangerous Driving">Rash Driving / Speeding</option>
+                </select>
+              </div>
+            </div>
+
+            <div>
+              <label class="text-slate-400">Description</label>
+              <input id="complaintDesc" type="text" placeholder="Describe what happened..." value="Bus had plenty of empty seats but driver skipped the stop!" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2 mt-1 outline-none text-xs" />
+            </div>
+
+            <div>
+              <label class="text-slate-400">Upload Photo or Video Evidence</label>
+              <input type="file" id="complaintFile" accept="image/*,video/*" onchange="previewSelectedMedia(this)" class="w-full text-[11px] text-slate-400 mt-1 file:mr-2 file:py-1 file:px-2 file:rounded-md file:border-0 file:text-[11px] file:bg-slate-700 file:text-slate-200 hover:file:bg-slate-600" />
+              <div id="localMediaPreview" class="hidden mt-2 p-2 bg-slate-900 rounded-lg border border-slate-700"></div>
+            </div>
+
+            <button onclick="submitGrievance()" class="w-full bg-rose-600 hover:bg-rose-500 text-white font-semibold py-2 rounded-lg text-xs mt-1 transition">
+              Submit Complaint to APSRTC Management
+            </button>
+            <div id="complaintAck" class="hidden p-2.5 rounded-lg bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 text-[11px]"></div>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+  </div>
+
+  <script>
+    const API_BASE = "http://127.0.0.1:8000";
+    let map;
+    let busMarkers = {};
+    let allStops = [];
+    let allBuses = [];
+
+    let nearestStopObj = null;
+    let allowedRoutesForLocation = [];
+    let activeRouteFilter = null;
+    let selectedBusId = null;
+
+    let userLocationMarker = null;
+    let nearestStopMarker = null;
+    let walkingLine = null;
+
+    // Uploaded Media State
+    let encodedMediaData = null;
+    let encodedMediaType = null;
+
+    const EXTRA_VIZAG_AREAS = [
+      { name: "Andhra University Gate", lat: 17.7335, lng: 83.3235 },
+      { name: "MVP Colony", lat: 17.7440, lng: 83.3340 },
+      { name: "Dwaraka Nagar", lat: 17.7312, lng: 83.3065 },
+      { name: "Seethammadhara", lat: 17.7420, lng: 83.3110 },
+      { name: "Beach Road", lat: 17.7160, lng: 83.3240 },
+      { name: "Kancharapalem", lat: 17.7380, lng: 83.2780 },
+      { name: "Akkayyapalem", lat: 17.7375, lng: 83.2985 }
+    ];
+
+    // Read selected image or video into Base64 Data URL so Management Page can render & open it
+    function previewSelectedMedia(input) {
+      const previewBox = document.getElementById('localMediaPreview');
+      if (!input.files || input.files.length === 0) {
+        encodedMediaData = null;
+        encodedMediaType = null;
+        previewBox.classList.add('hidden');
+        return;
+      }
+
+      const file = input.files[0];
+      encodedMediaType = file.type;
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        encodedMediaData = e.target.result;
+        previewBox.classList.remove('hidden');
+        if (file.type.startsWith('video/')) {
+          previewBox.innerHTML = `<video src="${encodedMediaData}" controls class="w-full max-h-28 rounded"></video><p class="text-[10px] text-emerald-400 mt-1">✓ Video ready to attach (${file.name})</p>`;
+        } else {
+          previewBox.innerHTML = `<img src="${encodedMediaData}" class="w-full max-h-28 object-cover rounded" /><p class="text-[10px] text-emerald-400 mt-1">✓ Image ready to attach (${file.name})</p>`;
+        }
+      };
+      reader.readAsDataURL(file);
+    }
+
+    function calculateDistanceKm(lat1, lon1, lat2, lon2) {
+      const R = 6371;
+      const dLat = (lat2 - lat1) * Math.PI / 180;
+      const dLon = (lon2 - lon1) * Math.PI / 180;
+      const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+                Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+                Math.sin(dLon/2) * Math.sin(dLon/2);
+      return R * (2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)));
+    }
+
+    function initMap() {
+      map = L.map('map').setView([17.7320, 83.3050], 12);
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; OpenStreetMap contributors'
+      }).addTo(map);
+    }
+
+    async function fetchStopsAndBuses() {
+      try {
+        const [stopsRes, busesRes] = await Promise.all([
+          fetch(`${API_BASE}/api/stops`),
+          fetch(`${API_BASE}/api/buses`)
+        ]);
+        allStops = await stopsRes.json();
+        allBuses = await busesRes.json();
+
+        const dl = document.getElementById('vizagLocations');
+        dl.innerHTML = "";
+        [...allStops, ...EXTRA_VIZAG_AREAS].forEach(item => {
+          const opt = document.createElement('option');
+          opt.value = item.name;
+          dl.appendChild(opt);
+        });
+
+        const cSelect = document.getElementById('complaintBusId');
+        const currentVal = cSelect.value;
+        cSelect.innerHTML = "";
+        allBuses.forEach(b => {
+          const opt = document.createElement('option');
+          opt.value = b.id;
+          opt.innerText = `Route ${b.route_no} (${b.id})`;
+          cSelect.appendChild(opt);
+        });
+        if (currentVal) cSelect.value = currentVal;
+
+        if (nearestStopObj) {
+          const updatedStop = allStops.find(s => s.stop_id === nearestStopObj.stop_id);
+          if (updatedStop) {
+            nearestStopObj = updatedStop;
+            allowedRoutesForLocation = updatedStop.routes || [];
+          }
+          renderRouteFilterBar();
+          renderFilteredBuses();
+        }
+      } catch (e) {
+        console.error("Failed fetching data:", e);
+      }
+    }
+
+    function findNearestStopAndRoutes() {
+      const rawOrigin = document.getElementById('userLocationInput').value.trim();
+      const rawDest = document.getElementById('userDestinationInput').value.trim();
+
+      if (!rawOrigin) {
+        alert("Please enter your current location first.");
+        return;
+      }
+
+      let userLat = null, userLng = null;
+      const q = rawOrigin.toLowerCase();
+
+      const matchedStop = allStops.find(s => s.name.toLowerCase().includes(q) || q.includes(s.name.toLowerCase().split(' ')[0]));
+      const matchedExtra = EXTRA_VIZAG_AREAS.find(a => a.name.toLowerCase().includes(q) || q.includes(a.name.toLowerCase().split(' ')[0]));
+
+      if (matchedStop) {
+        userLat = matchedStop.lat + 0.0016;
+        userLng = matchedStop.lng + 0.0014;
+      } else if (matchedExtra) {
+        userLat = matchedExtra.lat;
+        userLng = matchedExtra.lng;
+      } else {
+        userLat = 17.7310 + (rawOrigin.length % 5) * 0.002;
+        userLng = 83.3050 + (rawOrigin.length % 4) * 0.002;
+      }
+
+      applyUserCoordinatesAndFindStop(userLat, userLng, rawOrigin, rawDest);
+    }
+
+    function useBrowserGPS() {
+      if (!navigator.geolocation) {
+        alert("Geolocation not supported.");
+        return;
+      }
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          const lat = pos.coords.latitude;
+          const lng = pos.coords.longitude;
+          document.getElementById('userLocationInput').value = `My Live GPS (${lat.toFixed(4)}, ${lng.toFixed(4)})`;
+          applyUserCoordinatesAndFindStop(lat, lng, "Your Live GPS Location", document.getElementById('userDestinationInput').value.trim());
+        },
+        () => {
+          document.getElementById('userLocationInput').value = "Maddilapalem AU Gate";
+          applyUserCoordinatesAndFindStop(17.7365, 83.3260, "Maddilapalem AU Gate", "");
+        }
+      );
+    }
+
+    function applyUserCoordinatesAndFindStop(userLat, userLng, userLabel, destLabel) {
+      if (allStops.length === 0) return;
+
+      let closest = allStops[0];
+      let minDistKm = 999999;
+
+      allStops.forEach(s => {
+        const d = calculateDistanceKm(userLat, userLng, s.lat, s.lng);
+        if (d < minDistKm) {
+          minDistKm = d;
+          closest = s;
+        }
+      });
+
+      nearestStopObj = closest;
+      allowedRoutesForLocation = [...(closest.routes || [])];
+      activeRouteFilter = allowedRoutesForLocation.length > 0 ? allowedRoutesForLocation[0] : null;
+      selectedBusId = null;
+
+      const distanceMeters = Math.max(60, Math.round(minDistKm * 1000));
+      const walkingMinutes = Math.max(1, Math.round((minDistKm / 4.8) * 60));
+
+      if (userLocationMarker) map.removeLayer(userLocationMarker);
+      if (nearestStopMarker) map.removeLayer(nearestStopMarker);
+      if (walkingLine) map.removeLayer(walkingLine);
+
+      const userIcon = L.divIcon({
+        className: 'user-pin',
+        html: `<div class="px-2.5 py-1 rounded-full bg-blue-600 text-white text-[11px] font-bold shadow-lg border-2 border-white flex items-center gap-1 whitespace-nowrap">
+                 <span>🧍</span><span>You: ${userLabel.slice(0, 16)}</span>
+               </div>`,
+        iconSize: [140, 26],
+        iconAnchor: [70, 13]
+      });
+
+      const stopIcon = L.divIcon({
+        className: 'stop-pin',
+        html: `<div class="px-2.5 py-1 rounded-full bg-emerald-500 text-slate-950 text-[11px] font-bold shadow-lg border-2 border-white flex items-center gap-1 whitespace-nowrap">
+                 <span>🚏</span><span>Stop: ${closest.name.split(' ')[0]}</span>
+               </div>`,
+        iconSize: [130, 26],
+        iconAnchor: [65, 13]
+      });
+
+      userLocationMarker = L.marker([userLat, userLng], { icon: userIcon }).addTo(map)
+        .bindPopup(`<b>🧍 Your Location:</b> ${userLabel}<br/><b>Lat/Lng:</b> ${userLat.toFixed(4)}, ${userLng.toFixed(4)}`);
+
+      nearestStopMarker = L.marker([closest.lat, closest.lng], { icon: stopIcon }).addTo(map)
+        .bindPopup(`<b>🚏 Nearest Bus Stop:</b> ${closest.name}<br/><b>Routes Passing Here:</b> ${allowedRoutesForLocation.join(', ')}`)
+        .openPopup();
+
+      walkingLine = L.polyline([[userLat, userLng], [closest.lat, closest.lng]], {
+        color: '#38bdf8',
+        weight: 3,
+        dashArray: '6, 8'
+      }).addTo(map);
+
+      map.flyTo([closest.lat, closest.lng], 14, { duration: 1.0 });
+
+      const infoBox = document.getElementById('routeInfoBox');
+      infoBox.classList.remove('hidden');
+      infoBox.innerHTML = `
+        <div class="flex items-center justify-between border-b border-slate-800 pb-1.5">
+          <span class="text-blue-400 font-semibold">🧍 Your Location:</span>
+          <span class="text-white font-medium">${userLabel}</span>
+        </div>
+        <div class="flex items-center justify-between border-b border-slate-800 pb-1.5">
+          <span class="text-emerald-400 font-semibold">🚏 Nearest Bus Stop:</span>
+          <span class="text-white font-bold">${closest.name}</span>
+        </div>
+        <div class="grid grid-cols-2 gap-2 pt-1">
+          <div class="bg-slate-800/90 p-2 rounded-lg text-center border border-slate-700">
+            <div class="text-[10px] text-slate-400 uppercase">Distance to Stop</div>
+            <div class="text-sm font-bold text-white">${distanceMeters} m <span class="text-[10px] text-slate-400">(${minDistKm.toFixed(2)} km)</span></div>
+          </div>
+          <div class="bg-slate-800/90 p-2 rounded-lg text-center border border-slate-700">
+            <div class="text-[10px] text-slate-400 uppercase">Walking Time</div>
+            <div class="text-sm font-bold text-emerald-400">~${walkingMinutes} mins walk</div>
+          </div>
+        </div>
+        <div class="pt-1 text-[11px] text-slate-300">
+          <b>Routes serving this stop:</b> 
+          <span class="text-emerald-400 font-bold">${allowedRoutesForLocation.length ? allowedRoutesForLocation.map(r => 'Route ' + r).join(', ') : 'No active routes'}</span>
+        </div>
+      `;
+
+      renderRouteFilterBar();
+      renderFilteredBuses();
+    }
+
+    function renderRouteFilterBar() {
+      const bar = document.getElementById('routeFilterBar');
+      bar.innerHTML = "";
+
+      if (!nearestStopObj || allowedRoutesForLocation.length === 0) {
+        return;
+      }
+
+      allowedRoutesForLocation.forEach(routeNo => {
+        const isActive = (activeRouteFilter === routeNo);
+        const btn = document.createElement('button');
+        btn.className = isActive
+          ? "px-3 py-1.5 rounded-lg text-xs font-bold bg-emerald-500 text-slate-950 shadow"
+          : "px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-900 text-slate-300 border border-slate-700 hover:border-emerald-400";
+        btn.innerText = `Route ${routeNo}`;
+        btn.onclick = () => {
+          activeRouteFilter = routeNo;
+          selectedBusId = null;
+          renderRouteFilterBar();
+          renderFilteredBuses();
+        };
+        bar.appendChild(btn);
+      });
+    }
+
+    function createBusIcon(routeNo, isSelected) {
+      const styleClass = isSelected
+        ? 'bg-emerald-500 text-slate-950 border-white ring-4 ring-emerald-500/40 scale-125'
+        : 'bg-cyan-500 text-slate-950 border-white shadow-md';
+
+      return L.divIcon({
+        className: 'custom-bus-pin',
+        html: `<div class="px-2 py-1 rounded-md text-[11px] font-bold border flex items-center gap-1 ${styleClass}">
+                 <span>🚌</span><span>${routeNo}</span>
+               </div>`,
+        iconSize: [44, 24],
+        iconAnchor: [22, 12]
+      });
+    }
+
+    function renderFilteredBuses() {
+      const container = document.getElementById('busesContainer');
+
+      Object.keys(busMarkers).forEach(bid => {
+        map.removeLayer(busMarkers[bid]);
+        delete busMarkers[bid];
+      });
+
+      if (!nearestStopObj || !activeRouteFilter) {
+        return;
+      }
+
+      const routeBuses = allBuses
+        .filter(b => b.route_no === activeRouteFilter)
+        .sort((a, b) => a.eta_minutes - b.eta_minutes);
+
+      document.getElementById('busCount').innerText = `${routeBuses.length} Buses on Route ${activeRouteFilter}`;
+      container.innerHTML = "";
+
+      if (!selectedBusId && routeBuses.length > 0) {
+        selectedBusId = routeBuses[0].id;
+      }
+
+      routeBuses.forEach(bus => {
+        const isSelected = (bus.id === selectedBusId);
+        const barColor = bus.occupancy_pct > 85 ? 'bg-rose-500' : (bus.occupancy_pct > 50 ? 'bg-amber-500' : 'bg-emerald-500');
+        const badgeColor = bus.occupancy_pct > 85 ? 'text-rose-400 bg-rose-500/10 border-rose-500/20' : 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20';
+
+        const card = document.createElement('div');
+        card.className = `p-3.5 bg-slate-900/80 border rounded-xl space-y-2 cursor-pointer transition hover:border-emerald-400 ${
+          isSelected ? 'bus-card-selected' : 'border-slate-700'
+        }`;
+        card.onclick = () => {
+          selectedBusId = bus.id;
+          renderFilteredBuses();
+          map.flyTo([bus.current_lat, bus.current_lng], 14, { duration: 0.8 });
+          if (busMarkers[bus.id]) busMarkers[bus.id].openPopup();
+        };
+
+        card.innerHTML = `
+          <div class="flex justify-between items-start">
+            <div>
+              <span class="font-bold text-sm text-white">Route ${bus.route_no}</span>
+              <span class="text-xs text-emerald-400 font-mono ml-1">${bus.id}</span>
+              <p class="text-[11px] text-slate-300 font-medium">${bus.route_name}</p>
+              <p class="text-[10px] text-slate-400">Approaching: <b class="text-slate-200">${bus.next_stop}</b></p>
+            </div>
+            <span class="text-[10px] px-2 py-0.5 rounded-full border ${badgeColor} font-semibold">
+              Arriving: ${bus.eta_minutes} mins
+            </span>
+          </div>
+          <div>
+            <div class="flex justify-between text-[11px] text-slate-400 mb-1">
+              <span>Occupancy (${bus.current_passengers}/${bus.total_seats} seats)</span>
+              <span class="font-semibold text-slate-200">${bus.occupancy_pct}%</span>
+            </div>
+            <div class="w-full bg-slate-700 h-2 rounded-full overflow-hidden">
+              <div class="${barColor} h-2 transition-all duration-500" style="width: ${Math.min(100, bus.occupancy_pct)}%"></div>
+            </div>
+            ${bus.occupancy_pct > 85 ? '<p class="text-[10px] text-rose-400 mt-1 font-medium">⚠️ Overcrowded — Check next Route ' + bus.route_no + ' bus below.</p>' : '<p class="text-[10px] text-emerald-400 mt-1">✓ Seats available</p>'}
+          </div>
+        `;
+        container.appendChild(card);
+
+        busMarkers[bus.id] = L.marker([bus.current_lat, bus.current_lng], {
+          icon: createBusIcon(bus.route_no, isSelected)
+        }).addTo(map).bindPopup(`
+          <div class="text-slate-900 text-xs">
+            <b>Route ${bus.route_no} (${bus.id})</b><br/>
+            <b>Next Stop:</b> ${bus.next_stop}<br/>
+            <b>Occupancy:</b> ${bus.occupancy_pct}%<br/>
+            <b>Arriving in:</b> ${bus.eta_minutes} mins
+          </div>
+        `);
+      });
+
+      const drawer = document.getElementById('comparisonDrawer');
+      drawer.classList.remove('hidden');
+      document.getElementById('comparisonTitle').innerText = `Route ${activeRouteFilter} — Incoming Buses & Arrival Times`;
+      document.getElementById('comparisonStopTag').innerText = `Boarding Stop: ${nearestStopObj.name}`;
+
+      const compList = document.getElementById('comparisonList');
+      compList.innerHTML = "";
+      routeBuses.forEach((bus, idx) => {
+        const isCurrent = (bus.id === selectedBusId);
+        const barColor = bus.occupancy_pct > 85 ? 'bg-rose-500' : (bus.occupancy_pct > 50 ? 'bg-amber-500' : 'bg-emerald-500');
+        const tag = idx === 0 ? "1st Bus (Closest)" : (idx === 1 ? "2nd Bus (Next)" : "Following Bus");
+
+        const item = document.createElement('div');
+        item.className = `p-3 rounded-xl border text-xs ${isCurrent ? 'bg-emerald-950/30 border-emerald-500' : 'bg-slate-900 border-slate-700'}`;
+        item.innerHTML = `
+          <div class="flex justify-between items-center mb-1">
+            <span class="text-[10px] font-bold uppercase text-emerald-400">${tag}</span>
+            <span class="font-bold text-white bg-slate-800 px-2 py-0.5 rounded">${bus.eta_minutes} mins</span>
+          </div>
+          <div class="font-bold text-white text-sm mb-1">${bus.id}</div>
+          <div class="text-[11px] text-slate-400 mb-1.5">Occupancy: <b class="text-white">${bus.occupancy_pct}%</b> (${bus.current_passengers}/${bus.total_seats})</div>
+          <div class="w-full bg-slate-700 h-1.5 rounded-full overflow-hidden mb-1.5">
+            <div class="${barColor} h-1.5" style="width: ${Math.min(100, bus.occupancy_pct)}%"></div>
+          </div>
+          <div class="text-[10px] ${bus.occupancy_pct > 85 ? 'text-rose-400' : 'text-emerald-400'}">
+            ${bus.occupancy_pct > 85 ? 'Crowded — Catch next bus' : 'Comfortable to board'}
+          </div>
+        `;
+        compList.appendChild(item);
+      });
+    }
+
+    async function submitGrievance() {
+      const busId = document.getElementById('complaintBusId').value;
+      const issueType = document.getElementById('complaintIssueType').value;
+      const desc = document.getElementById('complaintDesc').value;
+      const stopName = nearestStopObj ? nearestStopObj.name : "Visakhapatnam Stop";
+
+      const res = await fetch(`${API_BASE}/api/complaints/triage`, {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({
+          bus_id: busId,
+          stop_name: stopName,
+          issue_type: issueType,
+          description: desc,
+          has_video: Boolean(encodedMediaData),
+          media_data: encodedMediaData,
+          media_type: encodedMediaType
+        })
+      });
+      const data = await res.json();
+      const ack = document.getElementById('complaintAck');
+      ack.classList.remove('hidden');
+      ack.innerHTML = `✓ <b>Complaint #${data.complaint_id} Submitted!</b> Open the <a href="admin.html" class="underline font-bold">Management Portal</a> to view the uploaded media & mark as finished.`;
+      
+      // Clear file input after submit
+      document.getElementById('complaintFile').value = "";
+      document.getElementById('localMediaPreview').classList.add('hidden');
+      encodedMediaData = null;
+      encodedMediaType = null;
+    }
+
+    async function askGemmaAgent() {
+      const input = document.getElementById('agentInput');
+      const chat = document.getElementById('agentChatWindow');
+      const loc = nearestStopObj ? nearestStopObj.name : (document.getElementById('userLocationInput').value || "Vizag");
+      const text = input.value.trim();
+      if (!text) return;
+
+      chat.innerHTML += `<div class="text-right"><span class="bg-cyan-600/30 text-cyan-200 px-2 py-1 rounded-md inline-block my-1">${text}</span></div>`;
+      input.value = "";
+      chat.scrollTop = chat.scrollHeight;
+
+      const res = await fetch(`${API_BASE}/api/ai/commuter-agent`, {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({ query: text, user_location: loc })
+      });
+      const data = await res.json();
+      chat.innerHTML += `<div class="text-left"><span class="bg-slate-800 text-slate-200 px-2.5 py-1.5 rounded-md inline-block my-1 border border-slate-700">${data.reply}</span></div>`;
+      chat.scrollTop = chat.scrollHeight;
+    }
+
+    window.onload = () => {
+      initMap();
+      fetchStopsAndBuses();
+      setInterval(fetchStopsAndBuses, 4000);
+    };
+  </script>
+</body>
+</html>
