@@ -197,7 +197,7 @@ body.nodash .qnav{display:none}
   <!-- Main Content Layout — 3-zone grid:
        • Left  (lg:col-span-5): Trip Planner + Map
        • Middle (lg:col-span-4): Live Bus Fleet (scrollable)
-       • Bottom row (full-width): Gemma 4 AI + Report Grievance side-by-side -->
+       • Bottom row (full-width): AI Transit Assistant + Report Grievance side-by-side -->
   <main class="max-w-7xl mx-auto w-full px-4 py-6 flex flex-col gap-6 flex-1">
 
     <!-- Top row: Map+Planner | Bus Fleet -->
@@ -360,14 +360,14 @@ body.nodash .qnav{display:none}
 
     </div><!-- /Top row -->
 
-    <!-- Bottom row: Gemma 4 AI + Report Grievance — side by side -->
+    <!-- Bottom row: AI Transit Assistant + Report Grievance — side by side -->
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
 
-      <!-- Gemma 4 Commuter Transit Assistant -->
+      <!-- AI Commuter Transit Assistant -->
       <section id="assistant" class="bg-slate-900 border border-slate-800 rounded-xl p-4 shadow-lg flex flex-col">
         <div class="flex items-center justify-between mb-2">
           <h2 class="text-base font-bold text-emerald-400" data-i18n="ai_assistant_title">
-            🤖 Gemma 4 Transit Assistant
+            🤖 AI Transit Assistant
           </h2>
           <span class="text-[11px] bg-emerald-950 text-emerald-300 border border-emerald-700/50 px-2 py-0.5 rounded-full">
             Live Multi-Route RAG
@@ -391,10 +391,10 @@ body.nodash .qnav{display:none}
             data-i18n-placeholder="ai_input_placeholder"
             placeholder="Ask about bus routes, crowding, or ETA..." 
             class="flex-1 bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-emerald-500"
-            onkeydown="if(event.key==='Enter') askGemma()"
+            onkeydown="if(event.key==='Enter') askAI()"
           />
           <button 
-            onclick="askGemma()" 
+            onclick="askAI()" 
             class="bg-emerald-600 hover:bg-emerald-500 text-white font-semibold px-4 py-2 rounded-lg text-xs transition cursor-pointer"
             data-i18n="ask_ai_btn">
             Ask AI
@@ -408,7 +408,7 @@ body.nodash .qnav{display:none}
           🚨 Report APSRTC Bus Grievance
         </h2>
         <p class="text-xs text-slate-400 mb-4" data-i18n="complaint_desc">
-          Did the driver skip your stop despite empty seats? Upload photo/video evidence for Gemma 4 telemetry verification.
+          Did the driver skip your stop despite empty seats? Upload photo/video evidence for AI telemetry verification.
         </p>
 
         <form id="complaintForm" onsubmit="submitComplaint(event)" class="space-y-3 text-xs">
@@ -511,13 +511,13 @@ body.nodash .qnav{display:none}
         overcrowded: "Overcrowded (>85%)",
         live_buses_title: "🚍 Active APSRTC Buses & Seat Occupancy",
         show_all_routes: "Show All Fleet",
-        ai_assistant_title: "🤖 Gemma 4 Transit Assistant",
+        ai_assistant_title: "🤖 AI Transit Assistant",
         ai_assistant_desc: "Ask which bus has empty seats, fastest arrival to your destination, or alternate routes.",
         ai_welcome_msg: "👋 Namaskaram! Enter your From & Destination stops or ask me: 'Which bus to Gajuwaka has empty seats right now?'",
         ai_input_placeholder: "Ask about bus routes, crowding, or ETA...",
         ask_ai_btn: "Ask AI",
         complaint_title: "🚨 Report APSRTC Bus Grievance",
-        complaint_desc: "Did the driver skip your stop despite empty seats? Upload photo/video evidence for Gemma 4 telemetry verification.",
+        complaint_desc: "Did the driver skip your stop despite empty seats? Upload photo/video evidence for AI telemetry verification.",
         select_bus_label: "Select Bus / Route",
         boarding_stop_label: "Your Boarding Stop",
         complaint_stop_placeholder: "e.g., Maddilapalem Bus Stop",
@@ -555,7 +555,7 @@ body.nodash .qnav{display:none}
         overcrowded: "అధిక రద్దీ (>85%)",
         live_buses_title: "🚍 అందుబాటులో ఉన్న APSRTC బస్సులు & సీట్ల వివరాలు",
         show_all_routes: "మొత్తం బస్సులను చూడండి",
-        ai_assistant_title: "🤖 జెమ్మా 4 (Gemma 4) ప్రయాణ సహాయకుడు",
+        ai_assistant_title: "🤖 AI ప్రయాణ సహాయకుడు",
         ai_assistant_desc: "ఏ బస్సులో సీట్లు ఖాళీగా ఉన్నాయో లేదా మీ గమ్యస్థానానికి ఎంతసేపట్లో వస్తుందో అడగండి.",
         ai_welcome_msg: "👋 నమస్కారం! మీరు బయలుదేరే మరియు వెళ్లాల్సిన ప్రాంతాన్ని ఎంచుకోండి లేదా 'గాజువాక వెళ్లే ఏ బస్సులో సీట్లు ఖాళీగా ఉన్నాయి?' అని అడగండి.",
         ai_input_placeholder: "బస్సు రూట్లు, రద్దీ లేదా సమయం గురించి అడగండి...",
@@ -1138,9 +1138,9 @@ body.nodash .qnav{display:none}
     }
 
     // ==========================================
-    // 7. GEMMA 4 AI TRANSIT ASSISTANT
+    // 7. AI TRANSIT ASSISTANT
     // ==========================================
-    async function askGemma() {
+    async function askAI() {
       const input = document.getElementById("aiPromptInput");
       const chatBox = document.getElementById("aiChatBox");
       const question = input.value.trim();
@@ -1164,7 +1164,7 @@ body.nodash .qnav{display:none}
           chatBox.innerHTML += `
             <div class="bg-slate-900 border border-slate-800 rounded-lg p-2.5 text-slate-200">
               <div class="flex items-center justify-between mb-1">
-                <span class="font-bold text-emerald-400">🤖 Gemma 4</span>
+                <span class="font-bold text-emerald-400">🤖 AI Assistant</span>
                 ${badge}
               </div>
               <div class="leading-relaxed text-xs">${data.reply || data.response}</div>
@@ -1185,7 +1185,7 @@ body.nodash .qnav{display:none}
       chatBox.innerHTML += `
         <div class="bg-slate-900 border border-slate-800 rounded-lg p-2.5 text-slate-200">
           <div class="flex items-center justify-between mb-1">
-            <span class="font-bold text-emerald-400">🤖 Gemma 4</span>
+            <span class="font-bold text-emerald-400">🤖 AI Assistant</span>
             <span class="text-[9px] bg-emerald-950 text-emerald-300 border border-emerald-700/60 px-1.5 py-0.5 rounded-full ml-1.5 font-normal">Offline Telemetry</span>
           </div>
           <div class="leading-relaxed text-xs">${reply}</div>
@@ -1244,8 +1244,8 @@ body.nodash .qnav{display:none}
       statusBox.classList.remove("hidden");
       statusBox.className = "p-2.5 rounded-lg text-center font-semibold bg-emerald-950 text-emerald-300 border border-emerald-700";
       statusBox.textContent = currentLang === "te"
-        ? "✅ మీ ఫిర్యాదు నమోదు చేయబడింది! జెమ్మా 4 (Gemma 4) కండక్టర్ డేటాతో పరిశీలిస్తోంది."
-        : "✅ Grievance logged! Gemma 4 has cross-verified conductor occupancy logs and alerted the Depot Manager.";
+        ? "✅ మీ ఫిర్యాదు నమోదు చేయబడింది! AI కండక్టర్ డేటాతో పరిశీలిస్తోంది."
+        : "✅ Grievance logged! AI has cross-verified conductor occupancy logs and alerted the Depot Manager.";
 
       document.getElementById("complaintForm").reset();
       document.getElementById("mediaPreviewContainer").classList.add("hidden");
@@ -1354,7 +1354,7 @@ Object.assign(translations.en,{nav_plan:'Plan trip',nav_map:'Live map',nav_buses
 Object.assign(translations.te,{nav_plan:'ప్రయాణ ప్లాన్',nav_map:'లైవ్ మ్యాప్',nav_buses:'బస్సులు',nav_ai:'సహాయకుడు',nav_report:'ఫిర్యాదు',live:'లైవ్',chip1:'ఏ బస్సులో సీట్లు ఖాళీగా ఉన్నాయి?',chip2:'గాజువాకకు వేగవంతమైన బస్సు',chip3:'రద్దీ లేని బస్సులు',chip4:'NAD నుండి RK బీచ్ రూట్లు',chip5:'రూట్ 400K లైవ్ స్టేటస్'});
 function showTyping(){hideTyping();const b=$('aiChatBox');b.insertAdjacentHTML('beforeend','<div id="typing" class="typing"><i></i><i></i><i></i></div>');b.scrollTop=b.scrollHeight}
 function hideTyping(){const t=$('typing');if(t)t.remove()}
-function askChip(b){$('aiPromptInput').value=b.textContent;askGemma()}
+function askChip(b){$('aiPromptInput').value=b.textContent;askAI()}
 
 /* Smart stop suggestions (replaces the plain datalist) */
 const sug=document.createElement('div');sug.id='sug';sug.hidden=true;document.body.appendChild(sug);
