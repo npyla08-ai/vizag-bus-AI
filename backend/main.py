@@ -1,5 +1,6 @@
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse
 from pydantic import BaseModel
 from typing import Optional
 import sqlite3
@@ -14,6 +15,8 @@ load_dotenv(os.path.join(os.path.dirname(__file__), ".env"))
 
 from db import get_db, DB_PATH
 
+FRONTEND_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "../frontend"))
+
 app = FastAPI(title="VizagBus AI — APSRTC Smart Transit API")
 
 app.add_middleware(
@@ -23,6 +26,38 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+@app.get("/")
+def serve_root():
+    index_path = os.path.join(FRONTEND_DIR, "index.html")
+    if os.path.exists(index_path):
+        return FileResponse(index_path)
+    return {
+        "status": "online",
+        "app": "VizagBus AI — APSRTC Smart Transit API",
+        "docs": "/docs"
+    }
+
+@app.get("/index.html")
+def serve_index():
+    index_path = os.path.join(FRONTEND_DIR, "index.html")
+    if os.path.exists(index_path):
+        return FileResponse(index_path)
+    raise HTTPException(status_code=404, detail="index.html not found")
+
+@app.get("/admin.html")
+def serve_admin_html():
+    admin_path = os.path.join(FRONTEND_DIR, "admin.html")
+    if os.path.exists(admin_path):
+        return FileResponse(admin_path)
+    raise HTTPException(status_code=404, detail="admin.html not found")
+
+@app.get("/admin")
+def serve_admin():
+    admin_path = os.path.join(FRONTEND_DIR, "admin.html")
+    if os.path.exists(admin_path):
+        return FileResponse(admin_path)
+    raise HTTPException(status_code=404, detail="admin.html not found")
 
 @app.on_event("startup")
 def ensure_db_seeded():
