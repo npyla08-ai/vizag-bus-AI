@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>VizagBus AI — APSRTC Management & Conductor Portal</title>
+  <title>VizagBus — APSRTC Management & Conductor Portal</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <script src="https://cdn.tailwindcss.com"></script>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -336,7 +336,12 @@ body.nodash .qnav{display:none}
             </h2>
             <p class="text-xs text-slate-400">View uploaded photo/video evidence and click "Mark as Finished" once action is taken.</p>
           </div>
-          <span id="complaintTotalBadge" class="px-3 py-1 rounded-full text-xs font-bold bg-rose-500/10 text-rose-400 border border-rose-500/20">0 Complaints</span>
+          <div class="flex items-center gap-2">
+            <span id="complaintTotalBadge" class="px-3 py-1 rounded-full text-xs font-bold bg-rose-500/10 text-rose-400 border border-rose-500/20">0 Complaints</span>
+            <button id="deleteSolvedHeaderBtn" onclick="deleteSolvedComplaints()" class="hidden px-3 py-1 rounded-full text-xs font-bold bg-rose-600/80 hover:bg-rose-600 text-white transition cursor-pointer flex items-center gap-1">
+              🗑️ Delete Solved
+            </button>
+          </div>
         </div>
 
         <div id="complaintsFeed" class="space-y-4 max-h-[800px] overflow-y-auto pr-1"></div>
@@ -668,6 +673,44 @@ body.nodash .qnav{display:none}
       loadAdminData();
     }
 
+    async function deleteComplaint(complaintId) {
+      if (!confirm("Are you sure you want to remove this solved complaint?")) return;
+      try {
+        await fetch(`${API_BASE}/api/complaints/${complaintId}`, {
+          method: 'DELETE'
+        });
+      } catch (e) {
+        try {
+          await fetch(`${API_BASE}/api/complaints/${complaintId}/delete`, {
+            method: 'POST'
+          });
+        } catch (err) {}
+      }
+      cachedComplaints = cachedComplaints.filter(c => c.id !== complaintId);
+      renderComplaintsFeed(cachedComplaints);
+      loadAdminData();
+    }
+
+    async function deleteSolvedComplaints() {
+      const resolved = cachedComplaints.filter(c => c.status === 'Resolved');
+      if (resolved.length === 0) return alert("No solved complaints to remove.");
+      if (!confirm(`Are you sure you want to delete all ${resolved.length} solved complaints?`)) return;
+      try {
+        await fetch(`${API_BASE}/api/complaints/resolved/all`, {
+          method: 'DELETE'
+        });
+      } catch (e) {
+        try {
+          await fetch(`${API_BASE}/api/complaints/resolved/delete-all`, {
+            method: 'POST'
+          });
+        } catch (err) {}
+      }
+      cachedComplaints = cachedComplaints.filter(c => c.status !== 'Resolved');
+      renderComplaintsFeed(cachedComplaints);
+      loadAdminData();
+    }
+
     function openMediaModal(complaintId) {
       const comp = cachedComplaints.find(c => c.id === complaintId);
       const media = comp ? (comp.media_data || comp.media_url) : null;
@@ -695,7 +738,17 @@ body.nodash .qnav{display:none}
 
     function renderComplaintsFeed(complaints) {
       const pendingCount = complaints.filter(c => c.status !== 'Resolved').length;
+      const resolvedCount = complaints.filter(c => c.status === 'Resolved').length;
       document.getElementById('complaintTotalBadge').innerText = `${pendingCount} Pending / ${complaints.length} Total`;
+      const delSolvedBtn = document.getElementById('deleteSolvedHeaderBtn');
+      if (delSolvedBtn) {
+        if (resolvedCount > 0) {
+          delSolvedBtn.classList.remove('hidden');
+          delSolvedBtn.innerHTML = `🗑️ Delete Solved (${resolvedCount})`;
+        } else {
+          delSolvedBtn.classList.add('hidden');
+        }
+      }
       const feed = document.getElementById('complaintsFeed');
       if (!feed) return;
 
@@ -752,6 +805,14 @@ body.nodash .qnav{display:none}
         const desc = c.description || c.complaint_text;
         const stop = c.stop_name || "Visakhapatnam";
 
+        const auditText = String(c.ai_action_summary || 'Depot Audit: Telemetry cross-verified.')
+          .replace(/gemma\s*4\s*audit:?/gi, 'Depot Audit:')
+          .replace(/gemma\s*4/gi, 'Depot')
+          .replace(/\bai\b/gi, 'Depot');
+        const depotOrder = String(c.ai_depot_order || 'Maintain fleet schedule.')
+          .replace(/gemma\s*4/gi, 'Depot')
+          .replace(/\bai\b/gi, 'Depot');
+
         card.innerHTML = `
           <div class="flex justify-between items-center border-b border-slate-800 pb-2.5">
             <div class="flex items-center gap-2">
@@ -769,6 +830,9 @@ body.nodash .qnav{display:none}
                 </button>
               ` : `
                 <span class="text-[11px] text-emerald-400 font-semibold">Action Completed</span>
+                <button onclick="deleteComplaint(${c.id})" class="px-2.5 py-1 rounded-lg bg-rose-600/90 hover:bg-rose-500 text-white font-bold text-[11px] shadow transition cursor-pointer flex items-center gap-1" title="Delete this solved complaint">
+                  🗑️ Delete
+                </button>
               `}
             </div>
           </div>
@@ -779,8 +843,8 @@ body.nodash .qnav{display:none}
           ${mediaHtml}
 
           <div class="p-2.5 bg-slate-900 rounded-lg border border-slate-800 text-[11px] text-emerald-400 font-mono">
-            ${c.ai_action_summary || 'Depot Audit: Telemetry cross-verified.'}<br/>
-            <b>Order:</b> ${c.ai_depot_order || 'Maintain fleet schedule.'}
+            ${auditText}<br/>
+            <b>Order:</b> ${depotOrder}
           </div>
         `;
         feed.appendChild(card);
