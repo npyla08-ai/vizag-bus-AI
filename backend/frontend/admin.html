@@ -1,0 +1,878 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>VizagBus — APSRTC Management & Conductor Portal</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    body { font-family: 'Inter', sans-serif; }
+    @keyframes shake {
+      0%, 100% { transform: translateX(0); }
+      20%, 60% { transform: translateX(-6px); }
+      40%, 80% { transform: translateX(6px); }
+    }
+    .shake-anim { animation: shake 0.35s ease-in-out; }
+  </style>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;700;800&family=DotGothic16&display=swap" rel="stylesheet"><style>:root{--ink:#070d1a;--amber:#ffb627;--mint:#34d399;--rose:#fb7185;--line:rgba(148,163,184,.16)}
+html{scroll-behavior:smooth;scroll-padding-top:8rem}
+body{background:var(--ink);background-image:radial-gradient(60rem 30rem at 85% -10%,rgba(255,182,39,.10),transparent 60%),radial-gradient(50rem 30rem at -10% 25%,rgba(52,211,153,.08),transparent 60%);background-attachment:fixed}
+h1,h2,h3{font-family:'Bricolage Grotesque','Noto Sans Telugu',sans-serif;letter-spacing:-.01em}
+body h1.text-emerald-400{color:#fff}
+body h2.uppercase{text-transform:none;letter-spacing:0;font-size:1.05rem}
+body header{background:rgba(7,13,26,.8);backdrop-filter:blur(14px);border-color:var(--line)}
+body section,body .rounded-2xl.bg-slate-900{background:rgba(15,23,42,.66);border:1px solid var(--line);border-radius:1.25rem;box-shadow:0 18px 50px -28px #000}
+body input,body select,body textarea{background:rgba(2,6,23,.75);border-radius:.75rem;transition:border-color .2s,box-shadow .2s}
+body input:focus,body select:focus,body textarea:focus{border-color:var(--amber);box-shadow:0 0 0 4px rgba(255,182,39,.14);outline:0}
+.search-card:focus-within{border-color:rgba(255,182,39,.4);box-shadow:0 0 0 1px rgba(255,182,39,.25),0 24px 70px -30px rgba(255,182,39,.35)}
+body button.bg-emerald-600,body button.bg-emerald-700,body button.bg-amber-500{background:var(--amber);color:#1a1200;font-weight:700}
+body button.bg-emerald-600:hover,body button.bg-emerald-700:hover,body button.bg-amber-500:hover{background:#ffc94d}
+body button,body a{transition:background .2s,transform .15s,color .2s}
+body button:active{transform:scale(.97)}
+body :focus-visible{outline:2px solid var(--amber);outline-offset:2px}
+.brand-mark,.led,body #stopRoutePills button,body button[title^="Filter only"]{font-family:'DotGothic16',monospace}
+.brand-mark{background:#05070d;color:var(--amber);border:1px solid #3a2e0a;border-radius:.6rem;padding:.3rem .55rem;font-size:1.3rem;text-shadow:0 0 10px rgba(255,182,39,.8)}
+body #stopRoutePills button,body button[title^="Filter only"]{background:#05070d;color:var(--amber);border:1px solid #3a2e0a;border-radius:.5rem;text-shadow:0 0 8px rgba(255,182,39,.7);letter-spacing:.06em}
+body #stopRoutePills button.bg-emerald-600{background:var(--amber);color:#1a1200;text-shadow:none}
+.qnav{display:flex;flex:0 0 100%;gap:.25rem;overflow-x:auto;max-width:80rem;margin:.5rem auto 0;padding:0 .25rem .5rem;scrollbar-width:none}
+.qnav a{padding:.35rem .85rem;border-radius:999px;font-size:.78rem;color:#94a3b8;white-space:nowrap}
+.qnav a:hover{color:#fff}.qnav a.on{background:var(--amber);color:#1a1200;font-weight:700}
+.ticker{display:flex;align-items:center;background:#05070d;border-bottom:1px solid #2a2208;color:var(--amber);font:15px 'DotGothic16',monospace;text-shadow:0 0 8px rgba(255,182,39,.6)}
+.ticker .live{padding:.5rem .9rem;background:var(--amber);color:#1a1200;text-shadow:none;font-weight:700}
+.ticker .track{flex:1;overflow:hidden;white-space:nowrap}
+#tickerText{display:inline-block;padding-left:100%;animation:scroll 70s linear infinite}
+.ticker:hover #tickerText{animation-play-state:paused}
+@keyframes scroll{to{transform:translateX(-100%)}}
+@keyframes rise{from{opacity:0;transform:translateY(8px)}}
+@keyframes drop{from{opacity:0;transform:translateY(-6px) scaleY(.96)}}
+@keyframes ping{from{transform:scale(.7);opacity:.9}to{transform:scale(1.7);opacity:0}}
+@keyframes flow{to{stroke-dashoffset:-22}}
+@keyframes bob{50%{transform:translateY(-4px);opacity:.4}}
+@keyframes drive{to{left:110%}}
+@keyframes flash{from{box-shadow:0 0 0 2px var(--amber),0 0 30px rgba(255,182,39,.4)}}
+#sug{position:fixed;z-index:9999;background:#0b1220;border:1px solid var(--line);border-radius:.9rem;box-shadow:0 24px 60px -12px #000;max-height:320px;overflow-y:auto;transform-origin:top;animation:drop .16s ease-out}
+.sug-i{display:flex;justify-content:space-between;gap:.75rem;padding:.55rem .85rem;cursor:pointer;font-size:.8rem;color:#e2e8f0}
+.sug-i small{color:#64748b}.sug-i.on{background:rgba(255,182,39,.12)}
+#sug mark{background:none;color:var(--amber);font-weight:700}
+#searchBtn{position:relative;overflow:hidden}
+#searchBtn.searching::after{content:"🚌";position:absolute;top:50%;left:-2rem;transform:translateY(-50%);animation:drive2 .7s ease-in forwards}
+@keyframes drive2{to{left:105%}}
+#nearestStopBanner:not(.hidden){animation:rise .4s ease-out}
+#busListContainer.enter>div{animation:rise .35s ease-out backwards;animation-delay:calc(var(--i,0)*30ms)}
+#aiChatBox>div:last-child{animation:rise .25s ease-out}
+.chips{display:flex;flex-wrap:wrap;gap:.4rem;margin-bottom:.6rem}
+.chips button{font-size:.7rem;padding:.3rem .7rem;border-radius:999px;border:1px solid var(--line);color:#cbd5e1;background:rgba(2,6,23,.6)}
+.chips button:hover{border-color:var(--amber);color:var(--amber)}
+.typing i{display:inline-block;width:6px;height:6px;margin:0 2px;border-radius:50%;background:var(--mint);animation:bob 1s infinite}
+.typing i:nth-child(2){animation-delay:.15s}.typing i:nth-child(3){animation-delay:.3s}
+#map{height:480px;border:1px solid var(--line);background:#0b1220}
+.bus-pin,.pin{position:relative;display:grid;place-items:center;border-radius:50%}
+.bus-pin{width:34px;height:34px;background:var(--c);border:2px solid #fff;box-shadow:0 4px 14px rgba(0,0,0,.5);font:700 10px Inter,sans-serif;color:#06130d}
+.bus-pin::after{content:"";position:absolute;inset:-5px;border-radius:50%;border:2px solid var(--c);animation:ping 2s ease-out infinite}
+.pin{width:30px;height:30px;font-size:15px;background:#0f172a;border:2px solid var(--c);box-shadow:0 0 0 4px rgba(255,182,39,.2)}
+.route-flow,.walk-flow{stroke-dasharray:10 12;animation:flow 1s linear infinite}
+.leaflet-popup-content-wrapper,.leaflet-popup-tip{background:#0f172a;color:#e2e8f0;border:1px solid var(--line)}
+.leaflet-bar a{background:#0f172a;color:#e2e8f0;border-color:var(--line)}
+.map-fab{position:absolute;right:12px;bottom:12px;z-index:500;padding:.45rem .8rem;border-radius:.75rem;background:#0f172a;color:var(--amber);border:1px solid var(--line);font-size:.75rem;font-weight:600}
+#portalLoginModal:not(.hidden)>div{animation:rise .25s ease-out}
+.stat{padding:1rem 1.25rem;border:1px solid var(--line);border-radius:1.1rem;background:rgba(15,23,42,.66)}
+.stat b{display:block;font:800 2.2rem 'Bricolage Grotesque',sans-serif;color:var(--amber);line-height:1.1}
+.stat span{font-size:.75rem;color:#94a3b8}
+#stAvg::after{content:'%'}
+.flash{animation:flash .5s}
+#complaintsFeed>div{border-left:3px solid var(--rose)}#complaintsFeed>div.opacity-70{border-left-color:var(--mint)}
+#loginSection{position:relative;overflow:hidden}
+#loginSection::before{content:"";position:absolute;left:0;right:0;bottom:14%;border-top:3px dashed rgba(255,182,39,.22)}
+#loginSection::after{content:"🚌";position:absolute;bottom:14%;left:-10%;font-size:2.6rem;animation:drive 16s linear infinite}
+body.nodash .qnav{display:none}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style></head>
+<body class="nodash bg-slate-950 text-slate-100 min-h-screen flex flex-col">
+
+  <!-- Fullscreen Media Lightbox Modal -->
+  <div id="mediaModal" class="hidden fixed inset-0 z-50 bg-black/85 backdrop-blur-sm flex items-center justify-center p-6">
+    <div class="bg-slate-900 border border-slate-700 rounded-2xl max-w-3xl w-full p-4 space-y-3 shadow-2xl">
+      <div class="flex justify-between items-center border-b border-slate-800 pb-2">
+        <h3 class="text-sm font-bold text-white" id="mediaModalTitle">Uploaded Evidence Viewer</h3>
+        <button onclick="closeMediaModal()" class="px-3 py-1 rounded-lg bg-slate-800 hover:bg-rose-600 text-xs font-bold text-white transition cursor-pointer">✕ Close</button>
+      </div>
+      <div id="mediaModalBody" class="flex justify-center items-center bg-black rounded-xl overflow-hidden max-h-[75vh]"></div>
+    </div>
+  </div>
+
+  <!-- Header -->
+  <header class="bg-slate-900 border-b border-slate-800 px-6 py-4 flex flex-wrap justify-between items-center gap-4 shadow-lg sticky top-0 z-40">
+    <div class="flex items-center gap-3">
+      <div class="w-10 h-10 bg-amber-500 rounded-xl flex items-center justify-center font-black text-xl text-slate-950 shadow-md">M</div>
+      <div>
+        <h1 class="font-bold text-xl tracking-tight text-white flex items-center gap-2">
+          APSRTC Management & Conductor Portal
+          <span class="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/30">Admin Secure</span>
+        </h1>
+        <p class="text-xs text-slate-400">Live Ticketing Headcount, Fleet/Route Configuration & Grievance Ledger</p>
+      </div>
+    </div>
+    
+    <div class="flex items-center gap-3">
+      <!-- Authenticated User Badge & Logout Button -->
+      <div id="adminHeaderActions" class="hidden flex items-center gap-3">
+        <span class="hidden sm:inline-flex items-center gap-1.5 text-xs text-emerald-400 font-semibold bg-emerald-950/60 border border-emerald-700/50 px-3 py-1.5 rounded-lg">
+          <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+          Depot Manager (admin)
+        </span>
+        <button 
+          onclick="handleLogout()" 
+          title="Sign out of Management Portal"
+          class="px-3.5 py-1.5 rounded-lg text-xs font-semibold bg-rose-500/20 text-rose-300 border border-rose-500/40 hover:bg-rose-500/30 transition cursor-pointer flex items-center gap-1.5">
+          <span>🚪</span> Logout
+        </button>
+      </div>
+
+      <a 
+        href="index.html" 
+        onclick="handleLogout()" 
+        class="px-3.5 py-1.5 rounded-lg text-xs font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 hover:bg-emerald-500/20 transition flex items-center gap-1.5 cursor-pointer">
+        <span>←</span> Commuter User Page
+      </a>
+    </div>
+  <nav class="qnav" aria-label="Sections"><a href="#conductor">Conductor console</a><a href="#fleetAdd">Add bus</a><a href="#stopAdd">Add stop</a><a href="#complaints">Complaints</a></nav></header>
+
+  <!-- ========================================== -->
+  <!-- AUTHENTICATION LOGIN SECTION               -->
+  <!-- ========================================== -->
+  <section id="loginSection" class="flex-1 flex items-center justify-center p-6">
+    <div class="w-full max-w-md bg-slate-900/90 border border-slate-800 rounded-2xl p-7 shadow-2xl backdrop-blur-sm space-y-6">
+      
+      <div class="text-center space-y-2">
+        <div class="inline-flex w-14 h-14 bg-amber-500/15 border border-amber-500/40 rounded-2xl items-center justify-center text-3xl mb-1 shadow-inner">
+          🔒
+        </div>
+        <h2 class="text-xl font-extrabold text-white tracking-tight">Depot & Conductor Portal Login</h2>
+        <p class="text-xs text-slate-400">
+          Enter Admin ID and Password to access APSRTC Depot Management & Conductor console.
+        </p>
+      </div>
+
+      <!-- Login Alert / Error Message -->
+      <div id="loginErrorMsg" class="hidden p-3 rounded-xl bg-rose-950/80 border border-rose-500/60 text-rose-300 text-xs font-semibold flex items-center gap-2">
+        <span class="text-base shrink-0">⚠️</span>
+        <span id="loginErrorText">Login failed: Invalid credentials entered.</span>
+      </div>
+
+      <form id="adminLoginForm" onsubmit="handleLogin(event)" class="space-y-4 text-xs">
+        <div>
+          <label class="block text-slate-300 font-semibold mb-1.5">Admin / Staff ID</label>
+          <div class="relative">
+            <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-500 pointer-events-none">👤</span>
+            <input 
+              id="adminUsername" 
+              type="text" 
+              required
+              placeholder="Enter Admin ID (admin)" 
+              class="w-full bg-slate-950 border border-slate-700 rounded-xl pl-9 pr-3 py-2.5 text-sm text-white focus:outline-none focus:border-amber-500 transition"
+            />
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-slate-300 font-semibold mb-1.5">Password</label>
+          <div class="relative">
+            <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-500 pointer-events-none">🔑</span>
+            <input 
+              id="adminPassword" 
+              type="password" 
+              required
+              placeholder="Enter Password (admin 123)" 
+              class="w-full bg-slate-950 border border-slate-700 rounded-xl pl-9 pr-10 py-2.5 text-sm text-white focus:outline-none focus:border-amber-500 transition"
+            />
+            <button 
+              type="button" 
+              onclick="togglePasswordVisibility()" 
+              class="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-slate-200 cursor-pointer">
+              <span id="pwdEyeIcon">👁️</span>
+            </button>
+          </div>
+        </div>
+
+        <button 
+          type="submit" 
+          id="loginSubmitBtn"
+          class="w-full bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold py-3 rounded-xl text-sm transition cursor-pointer shadow-lg hover:shadow-amber-500/20">
+          Sign In to Management Portal
+        </button>
+      </form>
+
+      <div class="pt-3 border-t border-slate-800 text-center">
+        <p class="text-[11px] text-slate-500">
+          Authorized personnel only • Visakhapatnam RTC Division
+        </p>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ========================================== -->
+  <!-- MANAGEMENT DASHBOARD (Protected)           -->
+  <!-- ========================================== -->
+  <main id="managementDashboard" class="hidden grid grid-cols-1 lg:grid-cols-12 gap-6 p-6 flex-1 max-w-7xl mx-auto w-full"><div class="lg:col-span-12 grid grid-cols-2 md:grid-cols-4 gap-4"><div class="stat"><b id="stBuses">0</b><span>Buses on the road</span></div><div class="stat"><b id="stAvg">0</b><span>Average occupancy</span></div><div class="stat"><b id="stFull">0</b><span>Overcrowded buses</span></div><div class="stat"><b id="stPending">0</b><span>Complaints waiting</span></div></div>
+
+    <!-- Left 5 Cols: Conductor Ticketing + Manual Fleet & Stop Management -->
+    <div class="lg:col-span-5 space-y-6">
+
+      <!-- 1. Conductor Live Ticketing Console -->
+      <div id="conductor" class="bg-slate-900 border border-amber-500/30 rounded-2xl p-5 shadow-md">
+        <div class="flex justify-between items-center mb-3">
+          <h2 class="text-sm font-bold uppercase tracking-wider text-amber-400">🎫 Conductor Ticketing & Headcount</h2>
+          <span class="text-[10px] bg-amber-500/20 text-amber-300 px-2 py-0.5 rounded font-bold">Real-Time Sync</span>
+        </div>
+        <p class="text-xs text-slate-400 mb-3">Select your bus and update passenger headcount as tickets are issued or passengers alight.</p>
+
+        <div class="space-y-3">
+          <div>
+            <label class="text-xs text-slate-400">Select Active Bus</label>
+            <select id="conductorBusSelect" onchange="renderSelectedConductorBus()" class="w-full bg-slate-950 border border-slate-700 rounded-lg p-2.5 text-sm mt-1 outline-none text-white"></select>
+          </div>
+
+          <div id="conductorBusStatus" class="p-3.5 bg-slate-950 rounded-xl border border-slate-800 space-y-2 text-xs"></div>
+
+          <div class="grid grid-cols-4 gap-2 pt-1">
+            <button onclick="changeCount(1)" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-2 rounded-lg text-xs transition cursor-pointer">+1 Ticket</button>
+            <button onclick="changeCount(5)" class="bg-emerald-700 hover:bg-emerald-600 text-white font-bold py-2 rounded-lg text-xs transition cursor-pointer">+5 Group</button>
+            <button onclick="changeCount(-1)" class="bg-slate-700 hover:bg-slate-600 text-white font-bold py-2 rounded-lg text-xs transition cursor-pointer">-1 Drop</button>
+            <button onclick="changeCount(-5)" class="bg-slate-800 hover:bg-slate-700 text-white font-bold py-2 rounded-lg text-xs transition cursor-pointer">-5 Drop</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- 2. Manually Add Bus / Route Number -->
+      <div id="fleetAdd" class="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-md">
+        <h2 class="text-sm font-bold uppercase tracking-wider text-emerald-400 mb-3">🚌 Add New Bus & Route</h2>
+        <div class="space-y-3 text-xs">
+          <div class="grid grid-cols-2 gap-2">
+            <div>
+              <label class="text-slate-400">Bus ID</label>
+              <input id="newBusId" type="text" placeholder="e.g. AP31Z-5501" class="w-full bg-slate-950 border border-slate-700 rounded-lg p-2 mt-1 outline-none text-white" />
+            </div>
+            <div>
+              <label class="text-slate-400">Route Number</label>
+              <input id="newRouteNo" type="text" placeholder="e.g. 55K or 28" class="w-full bg-slate-950 border border-slate-700 rounded-lg p-2 mt-1 outline-none text-white" />
+            </div>
+          </div>
+
+          <div>
+            <label class="text-slate-400">Route Corridor Name</label>
+            <input id="newRouteName" type="text" placeholder="e.g. Scindia ➔ Simhachalam" class="w-full bg-slate-950 border border-slate-700 rounded-lg p-2 mt-1 outline-none text-white" />
+          </div>
+
+          <div class="grid grid-cols-3 gap-2">
+            <div>
+              <label class="text-slate-400">Current Stop</label>
+              <select id="newBusNextStop" class="w-full bg-slate-950 border border-slate-700 rounded-lg p-2 mt-1 outline-none text-white"></select>
+            </div>
+            <div>
+              <label class="text-slate-400">Initial Headcount</label>
+              <input id="newBusPassengers" type="number" value="15" class="w-full bg-slate-950 border border-slate-700 rounded-lg p-2 mt-1 outline-none text-white" />
+            </div>
+            <div>
+              <label class="text-slate-400">ETA (Mins)</label>
+              <input id="newBusEta" type="number" value="4" class="w-full bg-slate-950 border border-slate-700 rounded-lg p-2 mt-1 outline-none text-white" />
+            </div>
+          </div>
+
+          <div>
+            <label class="text-slate-400 block mb-1">Assign Stops Served by This Route</label>
+            <select id="newBusServedStops" multiple class="w-full h-24 bg-slate-950 border border-slate-700 rounded-lg p-2 outline-none text-white"></select>
+          </div>
+
+          <button onclick="addNewBus()" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-semibold py-2.5 rounded-lg transition cursor-pointer">
+            + Add Bus & Propagate to Commuter Page
+          </button>
+          <div id="busAddedMsg" class="hidden text-emerald-400 text-[11px] font-medium p-2 bg-emerald-950/60 rounded border border-emerald-700"></div>
+        </div>
+      </div>
+
+      <!-- 3. Manually Add New Bus Stop -->
+      <div id="stopAdd" class="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-md">
+        <h2 class="text-sm font-bold uppercase tracking-wider text-cyan-400 mb-3">🚏 Add New Bus Stop</h2>
+        <div class="space-y-2.5 text-xs">
+          <div class="grid grid-cols-2 gap-2">
+            <div>
+              <label class="text-slate-400">Stop ID Code</label>
+              <input id="newStopId" type="text" placeholder="e.g. MVP_COLONY" class="w-full bg-slate-950 border border-slate-700 rounded-lg p-2 mt-1 outline-none text-white" />
+            </div>
+            <div>
+              <label class="text-slate-400">Stop Display Name</label>
+              <input id="newStopName" type="text" placeholder="e.g. MVP Colony Double Road" class="w-full bg-slate-950 border border-slate-700 rounded-lg p-2 mt-1 outline-none text-white" />
+            </div>
+          </div>
+          <div class="grid grid-cols-2 gap-2">
+            <div>
+              <label class="text-slate-400">Latitude</label>
+              <input id="newStopLat" type="number" step="0.0001" value="17.7440" class="w-full bg-slate-950 border border-slate-700 rounded-lg p-2 mt-1 outline-none text-white" />
+            </div>
+            <div>
+              <label class="text-slate-400">Longitude</label>
+              <input id="newStopLng" type="number" step="0.0001" value="83.3340" class="w-full bg-slate-950 border border-slate-700 rounded-lg p-2 mt-1 outline-none text-white" />
+            </div>
+          </div>
+          <button onclick="addNewStop()" class="w-full bg-cyan-600 hover:bg-cyan-500 text-white font-semibold py-2.5 rounded-lg transition cursor-pointer">
+            + Add Bus Stop to Database
+          </button>
+          <div id="stopAddedMsg" class="hidden text-cyan-400 text-[11px] font-medium p-2 bg-cyan-950/60 rounded border border-cyan-700"></div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Right 7 Cols: Live Passenger Complaints & Vigilance Audit Feed -->
+    <div class="lg:col-span-7 space-y-6">
+      <div id="complaints" class="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-md">
+        <div class="flex justify-between items-center border-b border-slate-800 pb-3 mb-4">
+          <div>
+            <h2 class="text-base font-bold text-white flex items-center gap-2">
+              <span class="w-2.5 h-2.5 rounded-full bg-rose-500 animate-ping"></span>
+              Submitted Passenger Complaints & Vigilance Feed
+            </h2>
+            <p class="text-xs text-slate-400">View uploaded photo/video evidence and click "Mark as Finished" once action is taken.</p>
+          </div>
+          <div class="flex items-center gap-2">
+            <span id="complaintTotalBadge" class="px-3 py-1 rounded-full text-xs font-bold bg-rose-500/10 text-rose-400 border border-rose-500/20">0 Complaints</span>
+            <button id="deleteSolvedHeaderBtn" onclick="deleteSolvedComplaints()" class="hidden px-3 py-1 rounded-full text-xs font-bold bg-rose-600/80 hover:bg-rose-600 text-white transition cursor-pointer flex items-center gap-1">
+              🗑️ Delete Solved
+            </button>
+          </div>
+        </div>
+
+        <div id="complaintsFeed" class="space-y-4 max-h-[800px] overflow-y-auto pr-1"></div>
+      </div>
+    </div>
+
+  </main>
+
+  <script>
+    const API_BASE = window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1"
+      ? "http://127.0.0.1:8000"
+      : (window.location.hostname.includes("onrender.com") ? window.location.origin : "https://vizagbus-ai-backend.onrender.com");
+
+    let fleetBuses = [];
+    let stopsList = [];
+    let cachedComplaints = [];
+    let refreshTimer = null;
+
+    // ==========================================
+    // 1. AUTHENTICATION CONTROLLER
+    // ==========================================
+    function checkAuth() {
+      const isAuth = sessionStorage.getItem("vizagbus_admin_logged_in") === "true";
+      if (isAuth) {
+        showDashboard();
+        loadAdminData();
+        if (!refreshTimer) refreshTimer = setInterval(loadAdminData, 5000);
+      } else {
+        showLogin();
+      }
+    }
+
+    function showDashboard() {
+      document.getElementById("loginSection").classList.add("hidden");
+      document.getElementById("managementDashboard").classList.remove("hidden");
+      document.getElementById("adminHeaderActions").classList.remove("hidden");
+    }
+
+    function showLogin() {
+      document.getElementById("loginSection").classList.remove("hidden");
+      document.getElementById("managementDashboard").classList.add("hidden");
+      document.getElementById("adminHeaderActions").classList.add("hidden");
+      if (refreshTimer) {
+        clearInterval(refreshTimer);
+        refreshTimer = null;
+      }
+    }
+
+    function togglePasswordVisibility() {
+      const pwdInput = document.getElementById("adminPassword");
+      const icon = document.getElementById("pwdEyeIcon");
+      if (pwdInput.type === "password") {
+        pwdInput.type = "text";
+        icon.textContent = "🙈";
+      } else {
+        pwdInput.type = "password";
+        icon.textContent = "👁️";
+      }
+    }
+
+    async function handleLogin(e) {
+      e.preventDefault();
+      const user = document.getElementById("adminUsername").value.trim();
+      const pwd = document.getElementById("adminPassword").value.trim();
+      const errBox = document.getElementById("loginErrorMsg");
+      const errText = document.getElementById("loginErrorText");
+      const submitBtn = document.getElementById("loginSubmitBtn");
+
+      submitBtn.disabled = true;
+      submitBtn.textContent = "Verifying...";
+
+      let authenticated = false;
+
+      // 1. Call Backend API
+      try {
+        const res = await fetch(`${API_BASE}/api/admin/login`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ username: user, password: pwd })
+        });
+        if (res.ok) {
+          authenticated = true;
+        }
+      } catch (err) {
+        // Fallback local validation if server is unreachable
+        if (user.toLowerCase() === "admin" && (pwd === "admin 123" || pwd === "admin123")) {
+          authenticated = true;
+        }
+      }
+
+      submitBtn.disabled = false;
+      submitBtn.textContent = "Sign In to Management Portal";
+
+      if (authenticated) {
+        sessionStorage.setItem("vizagbus_admin_logged_in", "true");
+        errBox.classList.add("hidden");
+        showDashboard();
+        loadAdminData();
+        if (!refreshTimer) refreshTimer = setInterval(loadAdminData, 5000);
+      } else {
+        errBox.classList.remove("hidden");
+        errText.textContent = "Login failed: Invalid ID or password. Please verify your credentials.";
+        
+        // Shake feedback
+        const form = document.getElementById("adminLoginForm");
+        form.classList.remove("shake-anim");
+        void form.offsetWidth; // trigger reflow
+        form.classList.add("shake-anim");
+
+        const pwdField = document.getElementById("adminPassword");
+        pwdField.value = "";
+        pwdField.focus();
+      }
+    }
+
+    function handleLogout() {
+      sessionStorage.removeItem("vizagbus_admin_logged_in");
+      sessionStorage.removeItem("vizagbus_admin_token");
+      showLogin();
+      const pwdField = document.getElementById("adminPassword");
+      if (pwdField) pwdField.value = "";
+      const errBox = document.getElementById("loginErrorMsg");
+      if (errBox) errBox.classList.add("hidden");
+    }
+
+    // Auto-logout immediately when navigating away or switching pages
+    window.addEventListener("pagehide", () => {
+      sessionStorage.removeItem("vizagbus_admin_logged_in");
+      sessionStorage.removeItem("vizagbus_admin_token");
+    });
+
+    window.addEventListener("beforeunload", () => {
+      sessionStorage.removeItem("vizagbus_admin_logged_in");
+      sessionStorage.removeItem("vizagbus_admin_token");
+    });
+
+    window.addEventListener("pageshow", (event) => {
+      // If loaded from browser history or session cleared, force login screen
+      if (event.persisted || sessionStorage.getItem("vizagbus_admin_logged_in") !== "true") {
+        handleLogout();
+      } else {
+        checkAuth();
+      }
+    });
+
+    document.addEventListener("DOMContentLoaded", () => {
+      checkAuth();
+    });
+
+    // ==========================================
+    // 2. LOAD MANAGEMENT DATA
+    // ==========================================
+    async function loadAdminData() {
+      try {
+        const [busesRes, stopsRes, compRes] = await Promise.all([
+          fetch(`${API_BASE}/api/buses`),
+          fetch(`${API_BASE}/api/stops`),
+          fetch(`${API_BASE}/api/complaints`)
+        ]);
+
+        if (busesRes.ok) {
+          const bData = await busesRes.json();
+          fleetBuses = Array.isArray(bData) ? bData : (bData.buses || []);
+        }
+        if (stopsRes.ok) {
+          stopsList = await stopsRes.json();
+        }
+        if (compRes.ok) {
+          cachedComplaints = await compRes.json();
+        }
+
+        populateConductorDropdown();
+        populateStopSelects();
+        renderComplaintsFeed(cachedComplaints);
+      } catch (e) {
+        console.warn("Could not sync live admin data:", e);
+      }
+    }
+
+    function populateConductorDropdown() {
+      const sel = document.getElementById('conductorBusSelect');
+      if (!sel) return;
+      const current = sel.value;
+      sel.innerHTML = "";
+      fleetBuses.forEach(b => {
+        const opt = document.createElement('option');
+        opt.value = b.id;
+        const rNo = b.route_no || b.route_number || "Bus";
+        opt.innerText = `Route ${rNo} — ${b.id} (${b.route_name || b.current_stop})`;
+        sel.appendChild(opt);
+      });
+      if (current && fleetBuses.some(b => b.id === current)) {
+        sel.value = current;
+      }
+      renderSelectedConductorBus();
+    }
+
+    function renderSelectedConductorBus() {
+      const busId = document.getElementById('conductorBusSelect').value;
+      const bus = fleetBuses.find(b => b.id === busId);
+      const box = document.getElementById('conductorBusStatus');
+      if (!box) return;
+      if (!bus) {
+        box.innerHTML = `<span class="text-slate-400">No active bus selected.</span>`;
+        return;
+      }
+
+      const rNo = bus.route_no || bus.route_number;
+      const occPct = bus.occupancy_pct !== undefined ? bus.occupancy_pct : 50;
+      const passengers = bus.current_passengers !== undefined ? bus.current_passengers : (bus.occupancy || 20);
+      const cap = bus.total_seats || bus.capacity || 50;
+      const barColor = occPct > 85 ? 'bg-rose-500' : (occPct > 50 ? 'bg-amber-500' : 'bg-emerald-500');
+
+      box.innerHTML = `
+        <div class="flex justify-between items-center">
+          <span class="font-bold text-white text-sm">Route ${rNo} (${bus.id})</span>
+          <span class="text-xs text-emerald-400 font-semibold">📍 At: ${bus.current_stop || bus.next_stop}</span>
+        </div>
+        <div class="flex justify-between text-xs text-slate-300">
+          <span>Current Headcount: <b>${passengers} / ${cap} seats</b></span>
+          <span class="font-bold">${occPct}% Occupancy</span>
+        </div>
+        <div class="w-full bg-slate-800 h-2.5 rounded-full overflow-hidden">
+          <div class="${barColor} h-2.5 transition-all duration-300" style="width: ${Math.min(100, occPct)}%"></div>
+        </div>
+      `;
+    }
+
+    async function changeCount(delta) {
+      const busId = document.getElementById('conductorBusSelect').value;
+      if (!busId) return;
+      try {
+        await fetch(`${API_BASE}/api/conductor/update`, {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({ bus_id: busId, delta_passengers: delta })
+        });
+      } catch (e) {}
+      loadAdminData();
+    }
+
+    function populateStopSelects() {
+      const s1 = document.getElementById('newBusNextStop');
+      const s2 = document.getElementById('newBusServedStops');
+      if (!s1 || !s2) return;
+      if (s1.options.length === stopsList.length && stopsList.length > 0) return;
+
+      s1.innerHTML = "";
+      s2.innerHTML = "";
+      stopsList.forEach(s => {
+        const sName = s.name || s.stop_name;
+        const sId = s.stop_id || s.id;
+        const routes = (s.routes && s.routes.length > 0) ? s.routes.join(', ') : 'Standard';
+
+        const o1 = document.createElement('option');
+        o1.value = sName;
+        o1.innerText = `${sName}`;
+        s1.appendChild(o1);
+
+        const o2 = document.createElement('option');
+        o2.value = sName;
+        o2.innerText = `${sName} [Routes: ${routes}]`;
+        s2.appendChild(o2);
+      });
+    }
+
+    async function addNewStop() {
+      const stop_id = document.getElementById('newStopId').value.trim();
+      const name = document.getElementById('newStopName').value.trim();
+      const latitude = parseFloat(document.getElementById('newStopLat').value);
+      const longitude = parseFloat(document.getElementById('newStopLng').value);
+      if (!stop_id || !name) return alert("Please enter Stop ID and Stop Name.");
+
+      await fetch(`${API_BASE}/api/admin/stops`, {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({ stop_id, name, latitude, longitude })
+      });
+
+      const msg = document.getElementById('stopAddedMsg');
+      msg.classList.remove('hidden');
+      msg.innerText = `✓ Stop '${name}' saved! It is now searchable on Commuter Portal.`;
+      document.getElementById('newStopId').value = "";
+      document.getElementById('newStopName').value = "";
+      loadAdminData();
+    }
+
+    async function addNewBus() {
+      const bus_id = document.getElementById('newBusId').value.trim();
+      const route_no = document.getElementById('newRouteNo').value.trim();
+      const route_name = document.getElementById('newRouteName').value.trim();
+      const next_stop_id = document.getElementById('newBusNextStop').value;
+      const current_passengers = parseInt(document.getElementById('newBusPassengers').value) || 10;
+      const eta_minutes = parseInt(document.getElementById('newBusEta').value) || 5;
+
+      const multiSelect = document.getElementById('newBusServedStops');
+      const served_stop_ids = Array.from(multiSelect.selectedOptions).map(o => o.value);
+
+      if (!bus_id || !route_no || !route_name) {
+        return alert("Please fill in Bus ID, Route Number, and Route Corridor Name.");
+      }
+
+      await fetch(`${API_BASE}/api/admin/buses`, {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({
+          bus_id,
+          route_no,
+          route_name,
+          total_seats: 50,
+          current_passengers,
+          next_stop_id,
+          eta_minutes,
+          served_stop_ids
+        })
+      });
+
+      const msg = document.getElementById('busAddedMsg');
+      msg.classList.remove('hidden');
+      msg.innerText = `✓ Bus ${bus_id} (Route ${route_no}) activated and propagated to Commuter Live Tracker!`;
+      document.getElementById('newBusId').value = "";
+      loadAdminData();
+    }
+
+    async function markComplaintFinished(complaintId) {
+      await fetch(`${API_BASE}/api/complaints/${complaintId}/resolve`, {
+        method: 'POST'
+      });
+      loadAdminData();
+    }
+
+    async function deleteComplaint(complaintId) {
+      if (!confirm("Are you sure you want to remove this solved complaint?")) return;
+      try {
+        await fetch(`${API_BASE}/api/complaints/${complaintId}`, {
+          method: 'DELETE'
+        });
+      } catch (e) {
+        try {
+          await fetch(`${API_BASE}/api/complaints/${complaintId}/delete`, {
+            method: 'POST'
+          });
+        } catch (err) {}
+      }
+      cachedComplaints = cachedComplaints.filter(c => c.id !== complaintId);
+      renderComplaintsFeed(cachedComplaints);
+      loadAdminData();
+    }
+
+    async function deleteSolvedComplaints() {
+      const resolved = cachedComplaints.filter(c => c.status === 'Resolved');
+      if (resolved.length === 0) return alert("No solved complaints to remove.");
+      if (!confirm(`Are you sure you want to delete all ${resolved.length} solved complaints?`)) return;
+      try {
+        await fetch(`${API_BASE}/api/complaints/resolved/all`, {
+          method: 'DELETE'
+        });
+      } catch (e) {
+        try {
+          await fetch(`${API_BASE}/api/complaints/resolved/delete-all`, {
+            method: 'POST'
+          });
+        } catch (err) {}
+      }
+      cachedComplaints = cachedComplaints.filter(c => c.status !== 'Resolved');
+      renderComplaintsFeed(cachedComplaints);
+      loadAdminData();
+    }
+
+    function openMediaModal(complaintId) {
+      const comp = cachedComplaints.find(c => c.id === complaintId);
+      const media = comp ? (comp.media_data || comp.media_url) : null;
+      if (!comp || !media) return;
+
+      const modal = document.getElementById('mediaModal');
+      const body = document.getElementById('mediaModalBody');
+      const busNum = comp.bus_id || comp.bus_number;
+      const issue = comp.issue_type || comp.ai_category || "Grievance";
+      document.getElementById('mediaModalTitle').innerText = `Complaint #${comp.id} — Bus ${busNum} (${issue})`;
+
+      if (media.startsWith('data:video') || (comp.media_type && comp.media_type.startsWith('video/'))) {
+        body.innerHTML = `<video src="${media}" controls autoplay class="max-h-[70vh] w-auto rounded"></video>`;
+      } else {
+        body.innerHTML = `<img src="${media}" class="max-h-[70vh] w-auto object-contain rounded" />`;
+      }
+      modal.classList.remove('hidden');
+    }
+
+    function closeMediaModal() {
+      const modal = document.getElementById('mediaModal');
+      document.getElementById('mediaModalBody').innerHTML = "";
+      modal.classList.add('hidden');
+    }
+
+    function renderComplaintsFeed(complaints) {
+      const pendingCount = complaints.filter(c => c.status !== 'Resolved').length;
+      const resolvedCount = complaints.filter(c => c.status === 'Resolved').length;
+      document.getElementById('complaintTotalBadge').innerText = `${pendingCount} Pending / ${complaints.length} Total`;
+      const delSolvedBtn = document.getElementById('deleteSolvedHeaderBtn');
+      if (delSolvedBtn) {
+        if (resolvedCount > 0) {
+          delSolvedBtn.classList.remove('hidden');
+          delSolvedBtn.innerHTML = `🗑️ Delete Solved (${resolvedCount})`;
+        } else {
+          delSolvedBtn.classList.add('hidden');
+        }
+      }
+      const feed = document.getElementById('complaintsFeed');
+      if (!feed) return;
+
+      if (complaints.length === 0) {
+        feed.innerHTML = `<div class="p-8 text-center text-xs text-slate-500 border border-slate-800 rounded-xl">No passenger complaints submitted yet. Submit one from the Commuter Page to test live sync.</div>`;
+        return;
+      }
+
+      feed.innerHTML = "";
+      complaints.forEach(c => {
+        const isResolved = (c.status === 'Resolved');
+        const severity = c.ai_severity || c.ai_priority || "HIGH";
+        const badgeColor = isResolved 
+          ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' 
+          : (severity === 'Critical' || severity === 'High' ? 'bg-rose-500 text-white' : 'bg-amber-500 text-slate-950');
+
+        const media = c.media_data || c.media_url;
+        let mediaHtml = "";
+        if (media) {
+          if (media.startsWith('data:video') || (c.media_type && c.media_type.startsWith('video/'))) {
+            mediaHtml = `
+              <div class="mt-2 p-2.5 bg-slate-900 rounded-xl border border-slate-800 space-y-2">
+                <div class="flex justify-between items-center">
+                  <span class="text-[11px] font-semibold text-cyan-400">📹 Attached Video Evidence</span>
+                  <button onclick="openMediaModal(${c.id})" class="px-2.5 py-1 rounded bg-cyan-500/10 hover:bg-cyan-500/20 text-cyan-300 border border-cyan-500/30 text-[11px] font-semibold cursor-pointer">
+                    🔍 Open Fullscreen Video
+                  </button>
+                </div>
+                <video src="${media}" controls class="w-full max-h-52 rounded-lg bg-black"></video>
+              </div>
+            `;
+          } else {
+            mediaHtml = `
+              <div class="mt-2 p-2.5 bg-slate-900 rounded-xl border border-slate-800 space-y-2">
+                <div class="flex justify-between items-center">
+                  <span class="text-[11px] font-semibold text-cyan-400">🖼️ Attached Photo Evidence</span>
+                  <button onclick="openMediaModal(${c.id})" class="px-2.5 py-1 rounded bg-cyan-500/10 hover:bg-cyan-500/20 text-cyan-300 border border-cyan-500/30 text-[11px] font-semibold cursor-pointer">
+                    🔍 View Full Size Photo
+                  </button>
+                </div>
+                <img src="${media}" onclick="openMediaModal(${c.id})" class="w-full max-h-52 object-cover rounded-lg cursor-pointer hover:opacity-90 transition" />
+              </div>
+            `;
+          }
+        }
+
+        const card = document.createElement('div');
+        card.className = `p-4 rounded-xl border space-y-2.5 text-xs transition ${
+          isResolved ? 'bg-slate-950/50 border-slate-800/80 opacity-70' : 'bg-slate-950 border-slate-800'
+        }`;
+
+        const busNo = c.bus_id || c.bus_number;
+        const issue = c.issue_type || c.ai_category || "Grievance";
+        const desc = c.description || c.complaint_text;
+        const stop = c.stop_name || "Visakhapatnam";
+
+        const auditText = String(c.ai_action_summary || 'Depot Audit: Telemetry cross-verified.')
+          .replace(/gemma\s*4\s*audit:?/gi, 'Depot Audit:')
+          .replace(/gemma\s*4/gi, 'Depot')
+          .replace(/\bai\b/gi, 'Depot');
+        const depotOrder = String(c.ai_depot_order || 'Maintain fleet schedule.')
+          .replace(/gemma\s*4/gi, 'Depot')
+          .replace(/\bai\b/gi, 'Depot');
+
+        card.innerHTML = `
+          <div class="flex justify-between items-center border-b border-slate-800 pb-2.5">
+            <div class="flex items-center gap-2">
+              <span class="px-2 py-0.5 rounded text-[10px] font-bold uppercase ${badgeColor}">
+                ${isResolved ? '✓ FINISHED / RESOLVED' : severity}
+              </span>
+              <span class="font-bold text-white text-sm">Complaint #${c.id} • Bus ${busNo}</span>
+              <span class="text-slate-400">• ${issue}</span>
+            </div>
+            <div class="flex items-center gap-3">
+              <span class="text-rose-400 font-bold">Fine: ₹${c.ai_fine_inr || 500}</span>
+              ${!isResolved ? `
+                <button onclick="markComplaintFinished(${c.id})" class="px-3 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-[11px] shadow transition cursor-pointer">
+                  ✓ Mark as Finished
+                </button>
+              ` : `
+                <span class="text-[11px] text-emerald-400 font-semibold">Action Completed</span>
+                <button onclick="deleteComplaint(${c.id})" class="px-2.5 py-1 rounded-lg bg-rose-600/90 hover:bg-rose-500 text-white font-bold text-[11px] shadow transition cursor-pointer flex items-center gap-1" title="Delete this solved complaint">
+                  🗑️ Delete
+                </button>
+              `}
+            </div>
+          </div>
+
+          <p class="text-slate-300"><b>Passenger Report (${stop}):</b> "${desc}"</p>
+          <p class="text-slate-400 text-[11px]"><b>Conductor Headcount Telemetry at Incident:</b> ${c.logged_occupancy_pct || 78}% full</p>
+
+          ${mediaHtml}
+
+          <div class="p-2.5 bg-slate-900 rounded-lg border border-slate-800 text-[11px] text-emerald-400 font-mono">
+            ${auditText}<br/>
+            <b>Order:</b> ${depotOrder}
+          </div>
+        `;
+        feed.appendChild(card);
+      });
+    }
+
+    document.addEventListener("DOMContentLoaded", () => {
+      checkAuth();
+    });
+  </script>
+<script>
+const $=id=>document.getElementById(id);
+function countUp(el,to){const from=+el.dataset.v||0;el.dataset.v=to;const t0=performance.now();(function f(t){const p=Math.min(1,(t-t0)/600);el.textContent=Math.round(from+(to-from)*p);if(p<1)requestAnimationFrame(f)})(t0)}
+function updateStats(){const occ=b=>b.occupancy_pct!==undefined?b.occupancy_pct:50,n=fleetBuses.length;
+ countUp($('stBuses'),n);countUp($('stAvg'),n?Math.round(fleetBuses.reduce((a,b)=>a+occ(b),0)/n):0);
+ countUp($('stFull'),fleetBuses.filter(b=>occ(b)>85).length);countUp($('stPending'),cachedComplaints.filter(c=>c.status!=='Resolved').length)}
+/* Only redraw the complaint feed when something changed (stops videos restarting every 5s) */
+const _rcf=renderComplaintsFeed;let _cs='';
+renderComplaintsFeed=function(c){updateStats();const s=JSON.stringify(c.map(x=>[x.id,x.status,x.media_url?1:0]));if(s===_cs)return;_cs=s;_rcf(c)};
+/* Flash the headcount panel whenever it changes */
+const _rsc=renderSelectedConductorBus;let _last='';
+renderSelectedConductorBus=function(){_rsc();const b=$('conductorBusStatus'),t=b.textContent;if(_last&&t!==_last){b.classList.remove('flash');void b.offsetWidth;b.classList.add('flash')}_last=t};
+/* Tabs only show on the dashboard */
+const _sd=showDashboard,_sl=showLogin;
+showDashboard=function(){_sd();document.body.classList.remove('nodash')};
+showLogin=function(){_sl();document.body.classList.add('nodash')};
+const io=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting)document.querySelectorAll('.qnav a').forEach(a=>a.classList.toggle('on',a.getAttribute('href')==='#'+e.target.id))}),{rootMargin:'-35% 0px -55% 0px'});
+document.querySelectorAll('main [id]').forEach(s=>{if(['conductor','fleetAdd','stopAdd','complaints'].includes(s.id))io.observe(s)});
+</script>
+</body>
+</html>

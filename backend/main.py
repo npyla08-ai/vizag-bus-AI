@@ -15,7 +15,16 @@ load_dotenv(os.path.join(os.path.dirname(__file__), ".env"))
 
 from db import get_db, DB_PATH
 
-FRONTEND_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "../frontend"))
+def get_frontend_dir():
+    local_fe = os.path.abspath(os.path.join(os.path.dirname(__file__), "frontend"))
+    if os.path.exists(local_fe):
+        return local_fe
+    parent_fe = os.path.abspath(os.path.join(os.path.dirname(__file__), "../frontend"))
+    if os.path.exists(parent_fe):
+        return parent_fe
+    return local_fe
+
+FRONTEND_DIR = get_frontend_dir()
 
 app = FastAPI(title="VizagBus AI — APSRTC Smart Transit API")
 
@@ -61,20 +70,12 @@ def serve_admin():
 
 @app.on_event("startup")
 def ensure_db_seeded():
-    seed_script = os.path.abspath(os.path.join(os.path.dirname(__file__), "../database/seed_data.py"))
-    if not os.path.exists(DB_PATH) and os.path.exists(seed_script):
-        subprocess.run(["python3", seed_script], check=False)
-    else:
-        try:
-            conn = get_db()
-            c = conn.cursor()
-            c.execute("SELECT COUNT(*) FROM buses")
-            if c.fetchone()[0] == 0 and os.path.exists(seed_script):
-                subprocess.run(["python3", seed_script], check=False)
-            conn.close()
-        except Exception:
-            if os.path.exists(seed_script):
-                subprocess.run(["python3", seed_script], check=False)
+    try:
+        from seed import init_db
+        init_db(DB_PATH)
+        print(f"✓ Database verified and ready at {DB_PATH}")
+    except Exception as e:
+        print(f"Database initialization error: {e}")
 
 class ConductorUpdate(BaseModel):
     bus_id: str
