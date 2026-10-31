@@ -352,7 +352,7 @@ def list_complaints():
             "stop_name": stop,
             "logged_occupancy_pct": 78,
             "ai_fine_inr": 1000 if d["ai_priority"] == "High" else 500,
-            "ai_action_summary": f"Gemma 4 Audit: Cross-verified with conductor headcount logs.",
+            "ai_action_summary": f"Depot Audit: Cross-verified with conductor headcount logs.",
             "ai_depot_order": f"Immediate telemetry report sent for Route {d['bus_number']}.",
             "created_at": d.get("created_at")
         })
@@ -384,6 +384,27 @@ def resolve_complaint(complaint_id: int):
     conn.commit()
     conn.close()
     return {"status": "resolved", "id": complaint_id}
+
+@app.delete("/api/complaints/{complaint_id}")
+@app.post("/api/complaints/{complaint_id}/delete")
+def delete_complaint(complaint_id: int):
+    conn = get_db()
+    cursor = conn.cursor()
+    cursor.execute("DELETE FROM complaints WHERE id = ?", (complaint_id,))
+    conn.commit()
+    conn.close()
+    return {"status": "deleted", "id": complaint_id}
+
+@app.delete("/api/complaints/resolved/all")
+@app.post("/api/complaints/resolved/delete-all")
+def delete_all_resolved_complaints():
+    conn = get_db()
+    cursor = conn.cursor()
+    cursor.execute("DELETE FROM complaints WHERE status = 'Resolved'")
+    deleted_count = cursor.rowcount
+    conn.commit()
+    conn.close()
+    return {"status": "deleted", "count": deleted_count}
 
 @app.post("/api/admin/stops")
 def add_admin_stop(payload: AdminStopCreate):
