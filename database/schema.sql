@@ -1,46 +1,70 @@
-CREATE TABLE IF NOT EXISTS stops (
-    stop_id TEXT PRIMARY KEY,
-    name TEXT NOT NULL,
-    latitude REAL NOT NULL,
-    longitude REAL NOT NULL
+CREATE TABLE IF NOT EXISTS bus_stops (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    stop_name TEXT NOT NULL UNIQUE,
+    lat REAL NOT NULL,
+    lng REAL NOT NULL,
+    area TEXT,
+    landmark TEXT
+);
+
+CREATE TABLE IF NOT EXISTS bus_routes (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    bus_number TEXT NOT NULL UNIQUE,
+    route_name TEXT NOT NULL,
+    source TEXT NOT NULL,
+    destination TEXT NOT NULL,
+    via TEXT NOT NULL,
+    bus_type TEXT DEFAULT 'Metro Express',
+    frequency_mins INTEGER DEFAULT 15,
+    first_bus_time TEXT DEFAULT '05:30 AM',
+    last_bus_time TEXT DEFAULT '10:30 PM',
+    fare_min INTEGER DEFAULT 10,
+    fare_max INTEGER DEFAULT 35,
+    total_stops INTEGER DEFAULT 0
 );
 
 CREATE TABLE IF NOT EXISTS route_stops (
-    route_no TEXT NOT NULL,
-    stop_id TEXT NOT NULL,
-    PRIMARY KEY (route_no, stop_id),
-    FOREIGN KEY(stop_id) REFERENCES stops(stop_id)
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    bus_number TEXT NOT NULL,
+    stop_sequence INTEGER NOT NULL,
+    stop_name TEXT NOT NULL,
+    distance_km REAL DEFAULT 0.0,
+    eta_from_start_mins INTEGER DEFAULT 0
 );
 
 CREATE TABLE IF NOT EXISTS buses (
-    bus_id TEXT PRIMARY KEY,
-    route_no TEXT NOT NULL,
-    route_name TEXT NOT NULL,
-    total_seats INTEGER DEFAULT 50,
-    current_passengers INTEGER DEFAULT 0,
-    current_lat REAL NOT NULL,
-    current_lng REAL NOT NULL,
-    next_stop_id TEXT,
-    eta_minutes INTEGER DEFAULT 5,
-    last_updated TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY(next_stop_id) REFERENCES stops(stop_id)
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    bus_number TEXT NOT NULL,
+    source TEXT NOT NULL,
+    destination TEXT NOT NULL,
+    current_location TEXT NOT NULL,
+    lat REAL NOT NULL,
+    lng REAL NOT NULL,
+    eta_minutes INTEGER NOT NULL,
+    crowd_percentage INTEGER NOT NULL,
+    crowd_status TEXT NOT NULL,
+    next_bus_eta INTEGER NOT NULL,
+    speed_kmh INTEGER DEFAULT 32,
+    bus_type TEXT DEFAULT 'Metro Express'
+);
+
+CREATE TABLE IF NOT EXISTS alternative_routes (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    source TEXT NOT NULL,
+    destination TEXT NOT NULL,
+    option_type TEXT NOT NULL,
+    route_details TEXT NOT NULL,
+    total_time_mins INTEGER NOT NULL
 );
 
 CREATE TABLE IF NOT EXISTS complaints (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-    bus_id TEXT NOT NULL,
-    stop_name TEXT NOT NULL,
-    issue_type TEXT NOT NULL,
-    description TEXT,
-    has_video BOOLEAN DEFAULT 0,
-    media_data TEXT,
-    media_type TEXT,
-    status TEXT DEFAULT 'Pending',
-    logged_occupancy_pct INTEGER,
-    ai_verified BOOLEAN DEFAULT 0,
-    ai_severity TEXT,
-    ai_fine_inr INTEGER,
-    ai_action_summary TEXT,
-    ai_depot_order TEXT,
+    ticket_id TEXT NOT NULL UNIQUE,
+    bus_number TEXT NOT NULL,
+    complaint_text TEXT NOT NULL,
+    ai_category TEXT DEFAULT 'Pending',
+    ai_priority TEXT DEFAULT 'Medium',
+    status TEXT DEFAULT 'Open',
+    media_url TEXT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
